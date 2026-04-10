@@ -12,7 +12,7 @@ public class WebSocketServer
 {
     //variaveis    
     private static ConcurrentDictionary<string, WebSocket> _clients = new();
-
+    private static ConcurrentDictionary<string, int> _clients_elo = new();
 
     private static int _queue_buckets_size;
     private static ConcurrentDictionary<int, ConcurrentBag<(string, int)>> _queue = new();
@@ -57,6 +57,13 @@ public class WebSocketServer
                     int elo;
                     string resposta;
 
+                    if (!int.TryParse(elo_string, out elo))
+                    {
+                        resposta = "elo indevido";
+                        await MessageClientAsync(resposta, webSocket);
+                        continue;
+                    }
+
                     if (_is_queued.ContainsKey(id))
                     {
                         if (_is_queued[id] == true)
@@ -68,16 +75,12 @@ public class WebSocketServer
                         
                     }
 
-                    if (!int.TryParse(elo_string, out elo))
-                    {
-                        resposta = "elo indevido";
-                        await MessageClientAsync(resposta, webSocket);
-                        continue;
-                    }
 
 
                     int bucket = (elo/_queue_buckets_size)*_queue_buckets_size;
                     var elo_bucket = _queue.GetOrAdd(bucket, _ => new ConcurrentBag<(string, int)>());
+
+                    _clients_elo.TryAdd(id, elo);
 
                     if (elo_bucket.TryTake(out (string, int) player))
                     {
@@ -89,37 +92,16 @@ public class WebSocketServer
 
                         resposta = $"nova match! {opp_elo} vs {elo} -> {jogo}";
 
-
                         await MessageClientAsync(resposta, webSocket);
                         await MessageClientAsync(resposta, _clients[opp_id]);
                         continue;
                     }
-
-
-                        
-
 
                     elo_bucket.Add((id, elo));
                     _is_queued[id] = true;
 
                     resposta = $"entrou na queue {elo} -> {bucket}";
                     await MessageClientAsync(resposta, webSocket);
-
-                    
-
-
-
-                    // var builder = new StringBuilder();
-                    // builder.Append(resposta);
-                    // builder.Append('[');
-                    // foreach (var p in elo_bucket)
-                    // {
-                    //     builder.Append($"{p.Item2} ");
-                    // }
-                    // builder.Append(']');
-                    // resposta = builder.ToString();
-
-
                 }
                 else
                 {
@@ -130,10 +112,25 @@ public class WebSocketServer
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"\n\nerro com '{id}': {ex.Message}\n\n");
+            Console.WriteLine($"erro com '{id}': {ex.Message}");
         }
         finally
         {
+            Console.WriteLine($"saiu: '{id}'");
+            if (_is_queued.ContainsKey(id))
+            {
+                if (_is_queued[id] == true)
+                {
+                    int elo = _clients_elo[id];
+
+                    int bucket = (elo/_queue_buckets_size)*_queue_buckets_size;
+                    var elo_bucket = _queue.GetOrAdd(bucket, _ => new ConcurrentBag<(string, int)>());
+                    elo_bucket.TryTake(out (string, int) player);
+                }
+            }
+
+
+            _is_queued.TryRemove(id, out _);
             _clients.TryRemove(id, out _);
             if (webSocket.State != WebSocketState.Aborted)
             {
@@ -150,12 +147,7 @@ public class WebSocketServer
         listener.Start();
         
         Console.WriteLine("Servidor ligado");
-
         _queue_buckets_size = 50;
-        // for (int i = 0; i < _queue_buckets_size*50; i+=_queue_buckets_size)
-        // {
-        //     _queue.TryAdd(i, new ConcurrentBag<(string, int)>());
-        // }
 
 
         while (true)
@@ -166,13 +158,11 @@ public class WebSocketServer
                 var wsContext = await context.AcceptWebSocketAsync(null);
                 string clientID = Guid.NewGuid().ToString();
 
-                Console.WriteLine($"novo cliente: {clientID}\n");
+                Console.WriteLine($"novo cliente: {clientID}");
                 _clients.TryAdd(clientID, wsContext.WebSocket);
                 _ = Task.Run(() => HandleClientAsync(clientID, wsContext.WebSocket));
                 await MessageClientAsync($"voce é {clientID}", wsContext.WebSocket);
             }
         }
     }
-
-
 }
