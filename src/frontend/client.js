@@ -1,6 +1,6 @@
 let sock;
 function ligar(){
-    sock = new WebSocket("ws://localhost:8080"); 
+    sock = new WebSocket("ws://localhost:5015/ws"); 
 
     sock.onopen = () => {
         input.value = "conectado"
