@@ -143,7 +143,11 @@ public class Program
             Usuario? analise = find_user(cont, nome);
             if (analise == null)
             {
-                return Results.Ok("Coagulo nao existe");
+                return Results.NotFound("Coagulo nao existe");
+            }
+            if (analise.Stats == null)
+            {
+                return Results.NotFound("Coagulo nao tem stats?");
             }
 
             return Results.Ok( new{

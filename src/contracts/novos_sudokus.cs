@@ -4,6 +4,7 @@ namespace contracts;
 
 public record new_sudokus(string[] boards);
 
+public record api_message(string message);
 
 public record user_stats(
 
