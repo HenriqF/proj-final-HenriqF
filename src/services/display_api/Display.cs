@@ -21,4 +21,25 @@ app.MapGet("/sudoku", async () => {
     return Results.Ok(response?.boards);
 });
 
+
+app.MapGet("/stats/{nome}", async (string nome) => {
+    var client = new HttpClient();
+
+
+    var response = await client.GetAsync($"http://localhost:5127/stats/{nome}");
+
+    if (! response.IsSuccessStatusCode)
+    {
+
+        return Results.NotFound("coagulo secreto");
+    }
+
+
+    var stats = await client.GetFromJsonAsync<user_stats>(
+        $"http://localhost:5127/stats/{nome}"
+    );
+
+    return Results.Ok(stats);
+});
+
 app.Run();
