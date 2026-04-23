@@ -1,3 +1,15 @@
-﻿namespace contracts;
+﻿
+using System.Text.Json.Serialization;
+namespace contracts;
 
 public record new_sudokus(string[] boards);
+
+
+public record user_stats(
+
+    [property: JsonPropertyName("elo")] int elo,
+    [property: JsonPropertyName("vitorias")]int vitorias,
+    [property: JsonPropertyName("partidas")]int partidas,
+    [property: JsonPropertyName("melhor_tempo")]int melhor_tempo
+
+);
