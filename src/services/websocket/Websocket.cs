@@ -44,18 +44,37 @@ public class WebSocketServer
             string message = Encoding.UTF8.GetString(buffer, 0, result.Count);
             Console.WriteLine($"{id}: {message}");
 
-            if (message == "jogar")
+            if (message.StartsWith("jogar ") && message.Length > 6)
             {
                 var client = new HttpClient();
-                new_sudokus? response = await client.GetFromJsonAsync<new_sudokus>(
+
+                string user_name = message.Substring(6);
+                var get_stats_response = await client.GetAsync($"http://localhost:5127/stats/{user_name}");
+
+                if (! get_stats_response.IsSuccessStatusCode)
+                {
+                    await MessageClientAsync("player nao existe...?" , webSocket);
+                    continue;
+                }
+
+
+                var stats = await client.GetFromJsonAsync<user_stats>(
+                    $"http://localhost:5127/stats/{user_name}"
+                );
+                if (stats == null)
+                {
+                    throw new Exception("player sem estatisticas");
+                }
+
+                new_sudokus? sudokus = await client.GetFromJsonAsync<new_sudokus>(
                     "http://localhost:5121/new"
                 );
 
-                if (response == null)
+                if (sudokus == null)
                 {
                     throw new Exception("falha ao gerar sudoku.");
                 }
-                await MessageClientAsync(response.boards[0] , webSocket);
+                await MessageClientAsync(sudokus.boards[0] + $"    Seu elo: {stats.elo}", webSocket);
 
             }
             else
