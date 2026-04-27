@@ -13,11 +13,79 @@ namespace Sockets.WebSocketServer;
 public class WebSocketServer
 {
     //variaveis    
-    private static ConcurrentDictionary<string, WebSocket> _clients = new();
+    private static ConcurrentDictionary<string, WebSocket> _clients_sockets = new();
+
+
+    private static int _elo_prestiege_size = 200;
+    private static ConcurrentDictionary<int, string> _queued_clients = new();  
 
     //-------
 
-    static async Task MessageClientAsync(string message, WebSocket webSocket)
+    private static async void FindMatch(string player_name, string id, WebSocket webSocket)
+    {
+        var client = new HttpClient();
+
+        var get_stats_response = await client.GetAsync($"http://localhost:5127/stats/{player_name}");
+
+        if (! get_stats_response.IsSuccessStatusCode)
+        {
+            await MessageClientAsync("player nao existe...?" , webSocket);
+            return;
+        }
+
+        var stats = await client.GetFromJsonAsync<user_stats>(
+            $"http://localhost:5127/stats/{player_name}"
+        );
+        if (stats == null)
+        {
+            await MessageClientAsync("player sem estatisticas...?" , webSocket);
+            return;
+        }
+
+        int elo_bucket = stats.elo/_elo_prestiege_size;
+        if (_queued_clients.ContainsKey(elo_bucket))
+        {
+            if (_queued_clients[elo_bucket] == id)
+            {
+                await MessageClientAsync("já está dentro da queue...", webSocket);
+                return;
+            }
+
+            if (_queued_clients.TryRemove(elo_bucket, out string? opp_id))
+            {
+                new_sudokus? sudokus = await client.GetFromJsonAsync<new_sudokus>(
+                    "http://localhost:5121/new"
+                );
+
+                if (sudokus == null)
+                {
+                    await MessageClientAsync("falha ao gerar sudokus...", webSocket);
+                    await MessageClientAsync("falha ao gerar sudokus...", _clients_sockets[opp_id]);
+                    return;
+                }
+
+
+                await MessageClientAsync(sudokus.boards[0], webSocket);
+                await MessageClientAsync(sudokus.boards[0], _clients_sockets[opp_id]);
+                return;
+            }
+        }
+
+
+        if (_queued_clients.TryAdd(elo_bucket, id))
+        {
+            await MessageClientAsync($"procurando por oponente...", webSocket);
+            return;
+        }
+        else
+        {
+            await MessageClientAsync($"falha em entrar na queue.", webSocket);
+            return;
+        }
+    }
+
+
+    private static async Task MessageClientAsync(string message, WebSocket webSocket)
     {
         try
         {
@@ -31,7 +99,7 @@ public class WebSocketServer
         }
     }
 
-    static async Task HandleClientAsync(string id, WebSocket webSocket)
+    private static async Task HandleClientAsync(string id, WebSocket webSocket)
     {
         var buffer = new byte[1024];
 
@@ -46,40 +114,12 @@ public class WebSocketServer
 
             if (message.StartsWith("jogar ") && message.Length > 6)
             {
-                var client = new HttpClient();
-
-                string user_name = message.Substring(6);
-                var get_stats_response = await client.GetAsync($"http://localhost:5127/stats/{user_name}");
-
-                if (! get_stats_response.IsSuccessStatusCode)
-                {
-                    await MessageClientAsync("player nao existe...?" , webSocket);
-                    continue;
-                }
-
-
-                var stats = await client.GetFromJsonAsync<user_stats>(
-                    $"http://localhost:5127/stats/{user_name}"
-                );
-                if (stats == null)
-                {
-                    throw new Exception("player sem estatisticas");
-                }
-
-                new_sudokus? sudokus = await client.GetFromJsonAsync<new_sudokus>(
-                    "http://localhost:5121/new"
-                );
-
-                if (sudokus == null)
-                {
-                    throw new Exception("falha ao gerar sudoku.");
-                }
-                await MessageClientAsync(sudokus.boards[0] + $"    Seu elo: {stats.elo}", webSocket);
-
+                string player_name = message.Substring(6);
+                FindMatch(player_name, id, webSocket);
             }
             else
             {
-                await MessageClientAsync(message , webSocket);
+                await MessageClientAsync("echo:" + message , webSocket);
             }
 
 
@@ -112,7 +152,7 @@ public class WebSocketServer
 
             try
             {
-                _clients.TryAdd(client_id, web_socket);
+                _clients_sockets.TryAdd(client_id, web_socket);
 
                 Console.WriteLine($"novo cliente: {client_id}");
                 await MessageClientAsync($"voce é {client_id}", web_socket);
@@ -125,7 +165,7 @@ public class WebSocketServer
             }
             finally
             {
-                _clients.TryRemove(client_id, out _);
+                _clients_sockets.TryRemove(client_id, out _);
                 Console.WriteLine($"saiu: {client_id}");
             }
         });
