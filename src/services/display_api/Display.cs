@@ -10,7 +10,13 @@ Console.WriteLine("===============");
 
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 var app = builder.Build();
+
+app.UseSwagger();
+app.UseSwaggerUI();
+
 
 app.MapGet("/sudoku", async () => {
     var client = new HttpClient();
@@ -19,7 +25,7 @@ app.MapGet("/sudoku", async () => {
     );
 
     return Results.Ok(response?.boards);
-});
+}).WithName("GetNewBoards");
 
 
 app.MapGet("/stats/{nome}", async (string nome) => {
@@ -30,8 +36,7 @@ app.MapGet("/stats/{nome}", async (string nome) => {
 
     if (! response.IsSuccessStatusCode)
     {
-
-        return Results.NotFound("coagulo secreto");
+        return Results.NotFound("coagulo inexistente?");
     }
 
 
@@ -40,6 +45,6 @@ app.MapGet("/stats/{nome}", async (string nome) => {
     );
 
     return Results.Ok(stats);
-});
+}).WithName("GetUserStats");
 
 app.Run();
