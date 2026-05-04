@@ -15,11 +15,20 @@ public class WebSocketServer
     //variaveis    
     private static ConcurrentDictionary<string, WebSocket> _clients_sockets = new();
 
-
     private static int _elo_prestiege_size = 200;
     private static ConcurrentDictionary<int, string> _queued_clients = new();  
 
+    private static ConcurrentDictionary<string, string[]> _playing_clients = new();  //player, sudoku_board
+    private static ConcurrentDictionary<string, string> _playing_opponent = new();
+
     //-------
+
+
+    private static void RemovePlayingClient(string id)
+    {
+        _playing_clients.TryRemove(id, out _);
+        _playing_opponent.TryRemove(id, out _);
+    }
 
     private static async void FindMatch(string player_name, string id, WebSocket webSocket)
     {
@@ -53,20 +62,28 @@ public class WebSocketServer
 
             if (_queued_clients.TryRemove(elo_bucket, out string? opp_id))
             {
-                new_sudokus? sudokus = await client.GetFromJsonAsync<new_sudokus>(
+                new_sudokus? sudoku = await client.GetFromJsonAsync<new_sudokus>(
                     "http://localhost:5121/new"
                 );
 
-                if (sudokus == null)
+                if (sudoku == null)
                 {
                     await MessageClientAsync("falha ao gerar sudokus...", webSocket);
                     await MessageClientAsync("falha ao gerar sudokus...", _clients_sockets[opp_id]);
                     return;
                 }
 
+                _playing_clients.TryAdd(id, sudoku.boards);
+                _playing_clients.TryAdd(opp_id, sudoku.boards);
 
-                await MessageClientAsync(sudokus.boards[0], webSocket);
-                await MessageClientAsync(sudokus.boards[0], _clients_sockets[opp_id]);
+                _playing_opponent.TryAdd(id, opp_id);
+                _playing_opponent.TryAdd(opp_id, id);
+
+                await MessageClientAsync(sudoku.boards[0], webSocket);
+                await MessageClientAsync(sudoku.boards[0], _clients_sockets[opp_id]);
+
+                Console.WriteLine(sudoku.boards[0]);
+                Console.WriteLine(sudoku.boards[1]);
                 return;
             }
         }
@@ -112,7 +129,25 @@ public class WebSocketServer
             string message = Encoding.UTF8.GetString(buffer, 0, result.Count);
             Console.WriteLine($"{id}: {message}");
 
-            if (message.StartsWith("jogar ") && message.Length > 6)
+
+            if (_playing_clients.ContainsKey(id))
+            {
+                if (message == _playing_clients[id][1])
+                {
+                    await MessageClientAsync("VOCE PERDEU( SEU STATUS DE SIGMA)" , _clients_sockets[_playing_opponent[id]]);
+                    await MessageClientAsync("VOCE GANHOU! ETC..." , webSocket);
+
+                    RemovePlayingClient(_playing_opponent[id]);
+                    RemovePlayingClient(id);
+                }
+                else
+                {
+                    await MessageClientAsync("echo:" + message + $"{_playing_clients[id][0]}" , webSocket);
+                }
+            }
+
+
+            else if (message.StartsWith("jogar ") && message.Length > 6)
             {
                 string player_name = message.Substring(6);
                 FindMatch(player_name, id, webSocket);
