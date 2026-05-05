@@ -142,7 +142,7 @@ public class WebSocketServer
                 }
                 else
                 {
-                    await MessageClientAsync("echo:" + message + $"{_playing_clients[id][0]}" , webSocket);
+                    await MessageClientAsync("echo:" + message , webSocket);
                 }
             }
 
