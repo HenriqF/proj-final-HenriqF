@@ -5,11 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>front</title>
     <style>
+        body{
+            background-color: #f0f2f5;
+        }
+        
+        #goiaba{
+            font-family: sans-serif;
+            font-size: 2rem;
+        }
+
         textarea{
-            width: 40px;
-            height: 40px;
+            width: 2.7rem;
+            height: 2rem;
             resize: none;
             text-align: center;
+            background-color: white;
+            padding-top: 0.7rem;
+            padding-bottom: 0.3rem;
+            font-size: 1.6rem;
+            border: none;
+            border-radius: 3px;
+            font-family: sans-serif;
+            color: black;
+            box-shadow: 0 0 5px 1px rgba(0,0,0,.2) inset;
+        }
+
+        textarea:disabled{
+            color: #87898b;
         }
 
         .um{
@@ -17,9 +39,29 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 2.5rem; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            padding-top: 0rem;
         }
+
         .last{
-            margin-right: 30px;    
+            margin-right: 1rem;    
+        }
+
+        #final{
+            margin-top: 1.5rem;
+            width: 20rem;
+            height: 3rem;
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            cursor: pointer;
+            font-size: 1.3rem;
+            &:hover{
+                background: #005fd3;
+            }
         }
 
     </style>
@@ -31,58 +73,59 @@
     <label>resposta:</label>
     <label id="resposta">porraloca</label>
 
-    <button onclick="finalizar()">FINALIZEI</button>
-
     <div class="um" id="sus" style="display:none">
-        <textarea id="1"></textarea>
-        <textarea id="2"></textarea>
-        <textarea class="last" id="3"></textarea>
+        <h2 id="goiaba">Sudoku</h2>
+        <textarea maxlength="1" id="1"></textarea>
+        <textarea maxlength="1" id="2"></textarea>
+        <textarea maxlength="1" class="last" id="3"></textarea>
 
-        <textarea id="4"></textarea>
-        <textarea id="5"></textarea>
-        <textarea id="6"></textarea>
+        <textarea maxlength="1" id="4"></textarea>
+        <textarea maxlength="1" id="5"></textarea>
+        <textarea maxlength="1" id="6"></textarea>
         <br>
-        <textarea id="7"></textarea>
-        <textarea id="8"></textarea>
-        <textarea class="last" id="9"></textarea>
+        <textarea maxlength="1" id="7"></textarea>
+        <textarea maxlength="1" id="8"></textarea>
+        <textarea maxlength="1" class="last" id="9"></textarea>
 
-        <textarea id="10"></textarea>
-        <textarea id="11"></textarea>
-        <textarea id="12"></textarea>
+        <textarea maxlength="1" id="10"></textarea>
+        <textarea maxlength="1" id="11"></textarea>
+        <textarea maxlength="1" id="12"></textarea>
         <br>
         <br>
-        <textarea id="13"></textarea>
-        <textarea id="14"></textarea>
-        <textarea class="last" id="15"></textarea>
+        <textarea maxlength="1" id="13"></textarea>
+        <textarea maxlength="1" id="14"></textarea>
+        <textarea maxlength="1" class="last" id="15"></textarea>
 
-        <textarea id="16"></textarea>
-        <textarea id="17"></textarea>
-        <textarea id="18"></textarea>
+        <textarea maxlength="1" id="16"></textarea>
+        <textarea maxlength="1" id="17"></textarea>
+        <textarea maxlength="1" id="18"></textarea>
         <br>
-        <textarea id="19"></textarea>
-        <textarea id="20"></textarea>
-        <textarea class="last" id="21"></textarea>
+        <textarea maxlength="1" id="19"></textarea>
+        <textarea maxlength="1" id="20"></textarea>
+        <textarea maxlength="1" class="last" id="21"></textarea>
 
-        <textarea id="22"></textarea>
-        <textarea id="23"></textarea>
-        <textarea id="24"></textarea>
+        <textarea maxlength="1" id="22"></textarea>
+        <textarea maxlength="1" id="23"></textarea>
+        <textarea maxlength="1" id="24"></textarea>
         <br>
         <br>
-        <textarea id="25"></textarea>
-        <textarea id="26"></textarea>
-        <textarea class="last" id="27"></textarea>
+        <textarea maxlength="1" id="25"></textarea>
+        <textarea maxlength="1" id="26"></textarea>
+        <textarea maxlength="1" class="last" id="27"></textarea>
 
-        <textarea id="28"></textarea>
-        <textarea id="29"></textarea>
-        <textarea id="30"></textarea>
+        <textarea maxlength="1" id="28"></textarea>
+        <textarea maxlength="1" id="29"></textarea>
+        <textarea maxlength="1" id="30"></textarea>
         <br>
-        <textarea id="31"></textarea>
-        <textarea id="32"></textarea>
-        <textarea class="last" id="33"></textarea>
+        <textarea maxlength="1" id="31"></textarea>
+        <textarea maxlength="1" id="32"></textarea>
+        <textarea maxlength="1" class="last" id="33"></textarea>
 
-        <textarea id="34"></textarea>
-        <textarea id="35"></textarea>
-        <textarea id="36"></textarea>
+        <textarea maxlength="1" id="34"></textarea>
+        <textarea maxlength="1" id="35"></textarea>
+        <textarea maxlength="1" id="36"></textarea>
+        <br>
+        <button id="final" onclick="finalizar()">Mandar</button>
     </div>
     <script src="client.js"></script>  
 </body>
