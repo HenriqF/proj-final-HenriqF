@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>front</title>
+    <title>Document</title>
     <style>
         textarea{
             width: 40px;
             height: 40px;
             resize: none;
-            text-align: center;
         }
 
         .um{
@@ -21,19 +20,14 @@
         .last{
             margin-right: 30px;    
         }
+        .tres{
+            display: inline;
+        }
 
     </style>
 </head>
 <body>
-    <button id="butao">Mandar</button>
-    <input id="input" placeholder="mensagem"></input>
-    <br>
-    <label>resposta:</label>
-    <label id="resposta">porraloca</label>
-
-    <button onclick="finalizar()">FINALIZEI</button>
-
-    <div class="um" id="sus" style="display:none">
+    <div class="um">
         <textarea id="1"></textarea>
         <textarea id="2"></textarea>
         <textarea class="last" id="3"></textarea>
@@ -83,7 +77,32 @@
         <textarea id="34"></textarea>
         <textarea id="35"></textarea>
         <textarea id="36"></textarea>
+        <button onclick="jogando(str)">JOGAR</button>
+        <button onclick="formatar()">FORMATAR</button>
+        <p id="resp">sss</p>
     </div>
-    <script src="client.js"></script>  
+    <script>
+
+        const str = "sudoku:_3__54___2__1_65___254_62______64__1";
+
+        function jogando(sudoku){
+            let len = sudoku.length
+            for(let i=1,  j=7; j<=sudoku.length;i++, j++){
+                document.getElementById("resp").textContent = "jogando"
+                if(sudoku[j]!='_'){
+                    document.getElementById(`${i}`).value = sudoku[j]
+                    document.getElementById(`${i}`).disabled = true
+                }
+            }
+        }
+
+        function formatar(){
+            let out = ""
+            for(let i=1; i<37;i++){
+                out += `${document.getElementById(`${i}`).value}`
+            }
+            document.getElementById("resp").textContent = out
+        }
+    </script>
 </body>
 </html>

@@ -97,7 +97,7 @@ public class Program
         Usuario? user = null;
         try
         {
-            user = cont.usuarios.Include(u => u.Stats).FirstOrDefault(u => 
+            user = cont.usuarios.Include(u => u.Stats).FirstOrDefault(u =>
                 (
                     u.nome == nome
                 )
@@ -119,7 +119,7 @@ public class Program
         Console.WriteLine("BANCO DE DADOS ");
         Console.WriteLine("==============");
 
-        
+
         using var cont = new AppDbContext();
 
         if (!cont.Database.CanConnect())
@@ -131,8 +131,14 @@ public class Program
 
 
 
-        //new_user(cont, "pedro", "wow.com", "123");
-        //new_user(cont, "pedro_sigma", "wow.com@porra", "12344", 1200);
+
+        // new_user(cont, "pedro", "wow.com", "123");
+        // new_user(cont, "pedro_sigma", "wow.com@porra", "12344", 1200);
+        // new_user(cont, "almeida", "al@porra", "12344", 950);
+        // new_user(cont, "roberto", "bert@porra", "12344", 5500);
+        // new_user(cont, "porra", "maxmilneclimb@porra", "12344", 5600);
+        // new_user(cont, "daniel", "janjagarnbret@porra", "12344", 2200);
+        // new_user(cont, "joao", "aimori@porra", "12344", 2256);
 
 
         var builder = WebApplication.CreateBuilder(args);
@@ -160,5 +166,5 @@ public class Program
 
         app.Run();
     }
-    
+
 }

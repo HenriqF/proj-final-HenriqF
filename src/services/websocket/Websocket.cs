@@ -79,8 +79,8 @@ public class WebSocketServer
                 _playing_opponent.TryAdd(id, opp_id);
                 _playing_opponent.TryAdd(opp_id, id);
 
-                await MessageClientAsync(sudoku.boards[0], webSocket);
-                await MessageClientAsync(sudoku.boards[0], _clients_sockets[opp_id]);
+                await MessageClientAsync("sudoku:" + sudoku.boards[0], webSocket);
+                await MessageClientAsync("sudoku:" + sudoku.boards[0], _clients_sockets[opp_id]);
 
                 Console.WriteLine(sudoku.boards[0]);
                 Console.WriteLine(sudoku.boards[1]);
@@ -134,8 +134,8 @@ public class WebSocketServer
             {
                 if (message == _playing_clients[id][1])
                 {
-                    await MessageClientAsync("VOCE PERDEU( SEU STATUS DE SIGMA)" , _clients_sockets[_playing_opponent[id]]);
-                    await MessageClientAsync("VOCE GANHOU! ETC..." , webSocket);
+                    await MessageClientAsync("perdeu:" , _clients_sockets[_playing_opponent[id]]);
+                    await MessageClientAsync("ganhou:" , webSocket);
 
                     RemovePlayingClient(_playing_opponent[id]);
                     RemovePlayingClient(id);
