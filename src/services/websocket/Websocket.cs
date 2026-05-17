@@ -5,8 +5,16 @@ using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using System.Globalization;
 using System.Drawing;
+using System.Net.Http.Json; /* eu MARCELO botei isso */
+using System.Threading.Tasks; /* eu MARCELO botei isso */
+using System.Net.Http; /* eu MARCELO botei isso */
+using System.Security.Cryptography; /* eu Marcelo botei isso */
+using Microsoft.IdentityModel.Tokens; /* eu Marcelo botei isso */
 
 using contracts;
+using System.Collections.Specialized;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt; /* eu MARCELO botei isso */
 
 
 namespace Sockets.WebSocketServer;
@@ -28,6 +36,48 @@ public class WebSocketServer
     {
         _playing_clients.TryRemove(id, out _);
         _playing_opponent.TryRemove(id, out _);
+    }
+
+    private static async void Cadastrar(string[] dados, WebSocket webSocket)
+    {
+        var client = new HttpClient();
+
+        var response = await client.GetAsync($"http://localhost:5127/cadastrar/{dados[1]}/{dados[2]}/{dados[3]}");
+        
+        if (! response.IsSuccessStatusCode)
+        {
+            await MessageClientAsync("JATEM", webSocket);
+            return;
+        }
+
+        var jwt = CriarToken(dados[1], dados[2]);
+            
+        string[] logado = {"SUCESSO", dados[1], dados[2], jwt};
+
+        await MessageClientAsync(string.Join(",",logado), webSocket);
+        return;
+    }
+    private static async Task<string[]> FindUser(string player_name, WebSocket webSocket)
+    {
+        var client = new HttpClient();
+
+        var response = await client.GetAsync($"http://localhost:5127/find/{player_name}");
+
+        string[] erro = {"!"};
+        
+        if (! response.IsSuccessStatusCode)
+        {
+            return erro;
+        }
+
+        var user = await response.Content.ReadFromJsonAsync<string[]>();
+
+        if (user == null)
+        {
+            return erro;
+        }
+        
+        return user;
     }
 
     private static async void FindMatch(string player_name, string id, WebSocket webSocket)
@@ -152,6 +202,64 @@ public class WebSocketServer
                 string player_name = message.Substring(6);
                 FindMatch(player_name, id, webSocket);
             }
+
+
+
+
+             else if (message.StartsWith("cadastro"))
+            {
+                string[] cadastro = message.Split(',');
+
+                string[] achado = await FindUser(cadastro[1], webSocket);
+
+                if (achado[0] != "!") //achou usuario
+                {
+                    await MessageClientAsync("JATEM" , webSocket);
+                }
+                else
+                {   
+                    Cadastrar(cadastro, webSocket);
+                }
+            }
+
+
+
+
+
+
+            else if (message.StartsWith("login"))
+            {
+                string[] cadastro = message.Split(',');
+
+                string[] achado = await FindUser(cadastro[1], webSocket);
+
+                if (achado[0] == "!") //nao achou usuario
+                {
+                    await MessageClientAsync("CREDINV" , webSocket);
+                }
+                else
+                {
+                    byte[] senhaHash = Convert.FromBase64String(achado[1]);
+                    byte[] senhaSalt = Convert.FromBase64String(achado[2]);
+
+                    using var hmac = new HMACSHA512(senhaSalt);
+                    
+                    var ComputeHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(cadastro[2]));
+                    if (ComputeHash.SequenceEqual(senhaHash))
+                    {
+                        var jwt = CriarToken(achado[0], achado[3]);
+                        
+                        string[] logado = {"SUCESSO", achado[0], achado[3], jwt};
+
+                        await MessageClientAsync(string.Join(",",logado), webSocket);
+                    }
+                    else if (!ComputeHash.SequenceEqual(senhaHash))
+                    {
+                        await MessageClientAsync("CREDINV", webSocket);
+                    }
+                           
+                }
+            }
             else
             {
                 await MessageClientAsync("echo:" + message , webSocket);
@@ -162,6 +270,30 @@ public class WebSocketServer
     
     }
 
+    private static string CriarToken(string nome, string email)
+    {
+        List<Claim> clains = new List<Claim>()
+        {
+        new Claim("Email", email),
+        new Claim("Username", nome)
+        };
+
+        var silencio = "abobrinhacomemolesesoltabbvemdancarcomigochatovelhocomibostaontemnaomintofalosoverdades"; //tbm esta no appsettings
+
+        var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(silencio));
+
+        var cred = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+
+        var token = new JwtSecurityToken(
+        claims: clains,
+        expires: DateTime.Now.AddDays(1),
+        signingCredentials: cred
+        );
+
+        var jwt = new JwtSecurityTokenHandler().WriteToken(token);
+
+        return jwt;
+    }
     public static void Main(string[] args)
     {
         Console.WriteLine("===================");

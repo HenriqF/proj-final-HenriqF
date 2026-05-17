@@ -5,12 +5,15 @@ using MySqlConnector;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Cryptography.X509Certificates;
 using System.Reflection.Metadata;
+using System.Security.Cryptography; /* eu MARCELO botei isso */
 
 public class Usuario
 {
     public int id {get; set;}
     public string? email {get; set;}
-    public string? senha_hash {get; set;}
+    public byte[]? senha_hash {get; set;}
+
+    public byte[]? senha_salt {get; set;}
     public string? nome {get; set;}
 
     public Stats? Stats { get; set; }
@@ -44,7 +47,7 @@ public class AppDbContext : DbContext
         {
             Server = "127.0.0.1",
             Port = 3306,
-            Database = "sudoku",
+            Database = Environment.GetEnvironmentVariable("MYSQL_DATABASE"),
             UserID = "root",
             Password = Environment.GetEnvironmentVariable("MYSQL_ROOT_PASSWORD")
         };
@@ -62,25 +65,29 @@ public class AppDbContext : DbContext
     }
 }
 
-
-
 public class Program
 {
-    static bool new_user(AppDbContext cont, string nome, string email, string senha, int elo = 1000)
+    static async Task<bool> new_user(AppDbContext cont, string nome, string email, string senha, int elo = 1000)
     {
         try
         {
+            using var hmac = new HMACSHA512();
+            
+            byte[] senhaSalt = hmac.Key;
+            byte[] senhaHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(senha));
 
             Usuario novo = new Usuario
             {
                 email = email,
-                senha_hash = senha,
+                senha_hash = senhaHash,
+                senha_salt = senhaSalt,
                 nome = nome,
                 Stats = new Stats{user_elo = elo},
             };
 
             cont.Add(novo);
-            cont.SaveChanges();
+            await cont.SaveChangesAsync();
+
         }
         catch (Exception e)
         {
@@ -92,12 +99,12 @@ public class Program
     }
 
 
-    static Usuario? find_user(AppDbContext cont, string nome)
+    static async Task<Usuario?> find_user(AppDbContext cont, string nome)
     {
         Usuario? user = null;
         try
         {
-            user = cont.usuarios.Include(u => u.Stats).FirstOrDefault(u =>
+            user = await cont.usuarios.Include(u => u.Stats).FirstOrDefaultAsync(u =>
                 (
                     u.nome == nome
                 )
@@ -112,8 +119,27 @@ public class Program
         return user;
     }
 
+    static async Task<Usuario?> emailValido(AppDbContext cont, string email)
+    {
+        Usuario? user = null;
+        try
+        {
+            user = await cont.usuarios.FirstOrDefaultAsync(u =>
+                (
+                    u.email == email
+                )
+            );
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"{e}");
+            return user;
+        }
 
-    static void Main(string[] args)
+        return user;
+    }
+
+    static async Task Main(string[] args)
     {
         Console.WriteLine("==============");
         Console.WriteLine("BANCO DE DADOS ");
@@ -132,21 +158,21 @@ public class Program
 
 
 
-        // new_user(cont, "pedro", "wow.com", "123");
-        // new_user(cont, "pedro_sigma", "wow.com@porra", "12344", 1200);
-        // new_user(cont, "almeida", "al@porra", "12344", 950);
-        // new_user(cont, "roberto", "bert@porra", "12344", 5500);
-        // new_user(cont, "porra", "maxmilneclimb@porra", "12344", 5600);
-        // new_user(cont, "daniel", "janjagarnbret@porra", "12344", 2200);
-        // new_user(cont, "joao", "aimori@porra", "12344", 2256);
+        await new_user(cont, "pedro", "wow.com", "123");
+        await new_user(cont, "pedro_sigma", "wow.com@porra", "12344", 1200);
+        await new_user(cont, "almeida", "al@porra", "12344", 950);
+        await new_user(cont, "roberto", "bert@porra", "12344", 5500);
+        await new_user(cont, "porra", "maxmilneclimb@porra", "12344", 5600);
+        await new_user(cont, "daniel", "janjagarnbret@porra", "12344", 2200);
+        await new_user(cont, "joao", "aimori@porra", "12344", 2256);
 
 
         var builder = WebApplication.CreateBuilder(args);
         var app = builder.Build();
 
-        app.MapGet("/stats/{nome}", (string nome) =>
+        app.MapGet("/stats/{nome}", async (string nome) =>
         {
-            Usuario? analise = find_user(cont, nome);
+            Usuario? analise = await find_user(cont, nome);
             if (analise == null)
             {
                 return Results.NotFound("Coagulo nao existe");
@@ -161,6 +187,48 @@ public class Program
                     vitorias = analise.Stats.qtd_jogos_ganhos,
                     partidas = analise.Stats.qtd_jogos_jogados,
                     melhor_tempo = analise.Stats.melhor_tempo,
+                });
+        });
+
+        app.MapGet("/find/{nome}", async (string nome) =>
+        {
+            Usuario? analise = await find_user(cont, nome);
+            if (analise == null|| analise.senha_hash==null||analise.senha_salt ==null ||analise.nome==null||analise.email==null)
+            {
+                return Results.NotFound("Coagulo nao existe");
+            }
+
+            string _senhaHash = Convert.ToBase64String(analise.senha_hash);
+            string _senhaSalt = Convert.ToBase64String(analise.senha_salt);
+
+
+            string[] usuario = {analise.nome, _senhaHash, _senhaSalt, analise.email};
+
+            return Results.Ok(usuario);
+        });
+        
+        app.MapGet("/cadastrar/{nome}/{email}/{senha}", async (string nome, string email, string senha) =>
+        {
+            try
+            {
+                Usuario? analise = await emailValido(cont, email);
+                if(analise==null)
+                {
+                    await new_user(cont, nome, email, senha);
+                }
+                else
+                {
+                    return Results.NotFound("nnao criado");
+                }
+            }
+            catch
+            {
+                return Results.NotFound("nnao criado");
+            }
+            
+            return Results.Ok( new{
+                    usuario = nome,
+                    email = email,
                 });
         });
 
