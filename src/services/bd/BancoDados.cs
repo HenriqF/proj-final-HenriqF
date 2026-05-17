@@ -45,7 +45,7 @@ public class AppDbContext : DbContext
 
         var builder = new MySqlConnectionStringBuilder
         {
-            Server = "127.0.0.1",
+            Server = Environment.GetEnvironmentVariable("HOST"),
             Port = 3306,
             Database = Environment.GetEnvironmentVariable("MYSQL_DATABASE"),
             UserID = "root",
@@ -64,6 +64,8 @@ public class AppDbContext : DbContext
             .HasForeignKey<Stats>(s => s.user_id);
     }
 }
+
+
 
 public class Program
 {
@@ -97,7 +99,6 @@ public class Program
 
         return true;
     }
-
 
     static async Task<Usuario?> find_user(AppDbContext cont, string nome)
     {
@@ -151,9 +152,8 @@ public class Program
         if (!cont.Database.CanConnect())
         {
             Console.WriteLine("sem conexao banco");
-            return;
+            Environment.Exit(1);
         }
-
 
 
         // await new_user(cont, "pedro", "wow.com", "123");
@@ -165,8 +165,10 @@ public class Program
         // await new_user(cont, "joao", "aimori@porra", "12344", 2256);
 
 
+
         var builder = WebApplication.CreateBuilder(args);
         var app = builder.Build();
+
 
         app.MapGet("/stats/{nome}", async (string nome) =>
         {
@@ -203,9 +205,6 @@ public class Program
             return Results.Ok(new user_info(analise.nome, analise.email, _senhaHash, _senhaSalt));
         });
         
-
-       
-
         app.MapPost("/cadastrar", async (Cadastro cadastro) =>
         {
             try
@@ -224,8 +223,6 @@ public class Program
                 return Results.Conflict("nnao criado");
             }
         });
-
-
 
 
         app.Run();
