@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Cryptography.X509Certificates;
 using System.Reflection.Metadata;
 using System.Security.Cryptography; /* eu MARCELO botei isso */
-
+using contracts;
 public class Usuario
 {
     public int id {get; set;}
@@ -119,7 +119,7 @@ public class Program
         return user;
     }
 
-    static async Task<Usuario?> emailValido(AppDbContext cont, string email)
+    static async Task<Usuario?> userDoEmail(AppDbContext cont, string email)
     {
         Usuario? user = null;
         try
@@ -156,15 +156,13 @@ public class Program
 
 
 
-
-
-        await new_user(cont, "pedro", "wow.com", "123");
-        await new_user(cont, "pedro_sigma", "wow.com@porra", "12344", 1200);
-        await new_user(cont, "almeida", "al@porra", "12344", 950);
-        await new_user(cont, "roberto", "bert@porra", "12344", 5500);
-        await new_user(cont, "porra", "maxmilneclimb@porra", "12344", 5600);
-        await new_user(cont, "daniel", "janjagarnbret@porra", "12344", 2200);
-        await new_user(cont, "joao", "aimori@porra", "12344", 2256);
+        // await new_user(cont, "pedro", "wow.com", "123");
+        // await new_user(cont, "pedro_sigma", "wow.com@porra", "12344", 1200);
+        // await new_user(cont, "almeida", "al@porra", "12344", 950);
+        // await new_user(cont, "roberto", "bert@porra", "12344", 5500);
+        // await new_user(cont, "porra", "maxmilneclimb@porra", "12344", 5600);
+        // await new_user(cont, "daniel", "janjagarnbret@porra", "12344", 2200);
+        // await new_user(cont, "joao", "aimori@porra", "12344", 2256);
 
 
         var builder = WebApplication.CreateBuilder(args);
@@ -183,11 +181,11 @@ public class Program
             }
 
             return Results.Ok( new{
-                    elo = analise.Stats.user_elo,
-                    vitorias = analise.Stats.qtd_jogos_ganhos,
-                    partidas = analise.Stats.qtd_jogos_jogados,
-                    melhor_tempo = analise.Stats.melhor_tempo,
-                });
+                elo = analise.Stats.user_elo,
+                vitorias = analise.Stats.qtd_jogos_ganhos,
+                partidas = analise.Stats.qtd_jogos_jogados,
+                melhor_tempo = analise.Stats.melhor_tempo,
+            });
         });
 
         app.MapGet("/find/{nome}", async (string nome) =>
@@ -202,37 +200,37 @@ public class Program
             string _senhaSalt = Convert.ToBase64String(analise.senha_salt);
 
 
-            string[] usuario = {analise.nome, _senhaHash, _senhaSalt, analise.email};
-
-            return Results.Ok(usuario);
+            return Results.Ok(new user_info(analise.nome, analise.email, _senhaHash, _senhaSalt));
         });
         
-        app.MapGet("/cadastrar/{nome}/{email}/{senha}", async (string nome, string email, string senha) =>
+
+       
+
+        app.MapPost("/cadastrar", async (Cadastro cadastro) =>
         {
             try
             {
-                Usuario? analise = await emailValido(cont, email);
-                if(analise==null)
+                Usuario? us = await userDoEmail(cont, cadastro.email);
+                if(us != null)
                 {
-                    await new_user(cont, nome, email, senha);
+                    return Results.Conflict("nnao criado");
                 }
-                else
-                {
-                    return Results.NotFound("nnao criado");
-                }
+
+                await new_user(cont, cadastro.nome, cadastro.email, cadastro.senha);
+                return Results.Ok(new user_info(cadastro.nome, cadastro.email, "", ""));
             }
             catch
             {
-                return Results.NotFound("nnao criado");
+                return Results.Conflict("nnao criado");
             }
-            
-            return Results.Ok( new{
-                    usuario = nome,
-                    email = email,
-                });
         });
+
+
+
 
         app.Run();
     }
 
 }
+
+public record Cadastro(string nome, string email, string senha);

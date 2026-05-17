@@ -14,3 +14,11 @@ public record user_stats(
     [property: JsonPropertyName("melhor_tempo")]int melhor_tempo
 
 );
+
+
+public record user_info ( 
+    string nome,
+    string email,
+    string hash,
+    string salt
+);
