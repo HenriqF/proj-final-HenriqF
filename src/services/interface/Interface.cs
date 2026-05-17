@@ -45,7 +45,7 @@ string CriarToken(string nome, string email)
     }
 
 
-async Task<string> Cadastrar(Cadastro dados)
+async Task<bool> Cadastrar(Cadastro dados)
 {
     var client = new HttpClient();
     try
@@ -53,13 +53,13 @@ async Task<string> Cadastrar(Cadastro dados)
         var i = await client.PostAsJsonAsync($"http://localhost:5127/cadastrar", dados);
         if (!i.IsSuccessStatusCode)
         {
-            return "JATEM";
+            return false;
         }
-        return "CADASTRADO";
+        return true;
     }
     catch
     {
-        return "JATEM";
+        return false;
     }
 
 }
@@ -77,13 +77,10 @@ builder.Services.AddCors(options => //marcelo aqui
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.AllowAnyOrigin()   // This sets Access-Control-Allow-Origin: *
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
     });
 });
 var app = builder.Build();
-
 app.UseCors("AllowAll"); //marcelo aqui
 
 app.UseSwagger();
@@ -142,9 +139,12 @@ app.MapPost("/cadastro", async (Cadastro data) =>
     }
     catch
     {
-        Task<string> t  = Cadastrar(data);
-        string resposta = await t;
-        return Results.Created($"/login/", new Login(data.nome, data.senha));  
+        Task<bool> t  = Cadastrar(data);
+        if (await t)
+        {
+            return Results.Created($"/login/", new Login(data.nome, data.senha));  
+        }
+        return Results.Conflict("Email em uso");
     }
 
 }).WithName("Cadastro");

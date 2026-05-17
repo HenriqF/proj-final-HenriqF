@@ -22,13 +22,17 @@ async function fazerSignup(){
             body: JSON.stringify({ "nome": userCadastro.value, "email": email, "senha": senhaCadastro.value })
         });
 
-        const data = await response.json();
+        if (!response.ok){
+            mensagem.innerText = (await response.text()).slice(1, -1);
+            return;
+        }
 
-        mensagem.innerText = data;
+        const data  = await response.json();
+        mensagem.innerText = `seja bem vindo, ${data["nome"]}`;
 
     } catch (error) {
         mensagem.style.color = "red";
-        mensagem.innerText = "Erro ao conectar com o servidor.";
+        mensagem.innerText = "Erro";
     }
 }
 

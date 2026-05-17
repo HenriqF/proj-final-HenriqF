@@ -12,4 +12,4 @@ cd src\services\bd && start cmd /k "dotnet run"
 //start chrome "%cd%\src\frontend\game.html"
 
 
-//start chrome "%cd%\src\frontend\login.html"
+start chrome "%cd%\src\frontend\login.html"
