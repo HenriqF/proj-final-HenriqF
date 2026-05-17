@@ -67,6 +67,7 @@ public class WebSocketServer
         
         if (! response.IsSuccessStatusCode)
         {
+            Console.WriteLine($"{response}");
             return erro;
         }
 

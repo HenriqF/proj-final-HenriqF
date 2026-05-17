@@ -158,13 +158,13 @@ public class Program
 
 
 
-        await new_user(cont, "pedro", "wow.com", "123");
-        await new_user(cont, "pedro_sigma", "wow.com@porra", "12344", 1200);
-        await new_user(cont, "almeida", "al@porra", "12344", 950);
-        await new_user(cont, "roberto", "bert@porra", "12344", 5500);
-        await new_user(cont, "porra", "maxmilneclimb@porra", "12344", 5600);
-        await new_user(cont, "daniel", "janjagarnbret@porra", "12344", 2200);
-        await new_user(cont, "joao", "aimori@porra", "12344", 2256);
+        // await new_user(cont, "pedro", "wow.com", "123");
+        // await new_user(cont, "pedro_sigma", "wow.com@porra", "12344", 1200);
+        // await new_user(cont, "almeida", "al@porra", "12344", 950);
+        // await new_user(cont, "roberto", "bert@porra", "12344", 5500);
+        // await new_user(cont, "porra", "maxmilneclimb@porra", "12344", 5600);
+        // await new_user(cont, "daniel", "janjagarnbret@porra", "12344", 2200);
+        // await new_user(cont, "joao", "aimori@porra", "12344", 2256);
 
 
         var builder = WebApplication.CreateBuilder(args);
@@ -193,6 +193,7 @@ public class Program
         app.MapGet("/find/{nome}", async (string nome) =>
         {
             Usuario? analise = await find_user(cont, nome);
+            Console.WriteLine($"Analise: {analise}");
             if (analise == null|| analise.senha_hash==null||analise.senha_salt ==null ||analise.nome==null||analise.email==null)
             {
                 return Results.NotFound("Coagulo nao existe");
