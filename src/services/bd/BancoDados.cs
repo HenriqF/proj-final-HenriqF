@@ -91,9 +91,8 @@ public class Program
             await cont.SaveChangesAsync();
 
         }
-        catch (Exception e)
+        catch
         {
-            Console.WriteLine($"{e}");
             return false;
         }
 
@@ -140,6 +139,42 @@ public class Program
         return user;
     }
 
+
+
+    static async void testar(AppDbContext cont)
+    {
+        Usuario? analise = await find_user(cont, "pedro");
+        if (analise != null) goto deu_ruim;
+
+        Console.WriteLine("pedro não exite");
+
+        if (!await new_user(cont, "pedro", "wow.com", "123")) goto deu_ruim;
+
+        Console.Write("pedro criado");
+
+        analise = await find_user(cont, "pedro");
+        if (analise == null) goto deu_ruim;
+
+        Console.WriteLine($"pedro existe: {analise.email} {analise.id}");
+
+
+        await new_user(cont, "pedro_sigma", "wow.com@hudson", "12344", 1200);
+        await new_user(cont, "almeida", "al@hudson", "12344", 950);
+        await new_user(cont, "roberto", "bert@hudson", "12344", 5500);
+        await new_user(cont, "hudson", "maxmilneclimb@hudson", "12344", 5600);
+        await new_user(cont, "daniel", "janjagarnbret@hudson", "12344", 2200);
+        await new_user(cont, "joao", "aimori@hudson", "12344", 2256);
+
+
+        Environment.Exit(0);
+
+
+        deu_ruim:
+            Console.WriteLine("Deu Ruim");
+            Environment.Exit(1);
+    }
+
+
     static async Task Main(string[] args)
     {
         Console.WriteLine("==============");
@@ -155,16 +190,9 @@ public class Program
             Environment.Exit(1);
         }
 
+        if (args[0] == "teste") testar(cont);
 
-        // await new_user(cont, "pedro", "wow.com", "123");
-        // await new_user(cont, "pedro_sigma", "wow.com@porra", "12344", 1200);
-        // await new_user(cont, "almeida", "al@porra", "12344", 950);
-        // await new_user(cont, "roberto", "bert@porra", "12344", 5500);
-        // await new_user(cont, "porra", "maxmilneclimb@porra", "12344", 5600);
-        // await new_user(cont, "daniel", "janjagarnbret@porra", "12344", 2200);
-        // await new_user(cont, "joao", "aimori@porra", "12344", 2256);
-
-
+        
 
         var builder = WebApplication.CreateBuilder(args);
         var app = builder.Build();
