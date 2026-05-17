@@ -1,42 +1,45 @@
-function trocar(n){
-    let log = document.getElementById("entras");
-    let cada = document.getElementById("cadas");
+function trocar(){
+    document.getElementById("cadastro").click();
+};
 
-    if(n==1){
-        log.style.display = "none";
-        cada.style.display = "block";
+const userLogin = document.getElementById("username");
+const senhaLogin = document.getElementById("password");
+const mensagem = document.getElementById("message");
+
+async function fazerLogin(){
+    if(!validarLogin()){
+        return;
+    }
+    
+    try {
+
+        const response = await fetch('http://localhost:5269/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ "nome": userLogin.value, "senha": senhaLogin.value })
+        });
+
+        const data = await response.json();
+
+        mensagem.innerText = data;
+
+    } catch (error) {
+        mensagem.style.color = "red";
+        mensagem.innerText = "Erro ao conectar com o servidor.";
+    }
+    
+};
+
+function validarLogin(){
+    let regex = /^[a-zA-Z0-9]*$/;
+
+    if(userLogin.value == "" || senhaLogin.value == ""){
+        mensagem.innerText = "Campo em Branco!";
+        return false;
     }
 
-    if(n==2){
-        log.style.display = "block";
-        cada.style.display = "none";
+    if(!regex.test(userLogin.value)||!regex.test(senhaLogin.value)){
+        return false;
     }
+    return true;
 }
-
-async function fazerLogin() {
-        const user = document.getElementById('username').value;
-        const pass = document.getElementById('password').value;
-        const messageDiv = document.getElementById('message');
-
-        try {
-            const response = await fetch('https://localhost:7000/api/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ Username: user, Password: pass })
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                messageDiv.style.color = "green";
-                messageDiv.innerText = "Sucesso! Redirecionando...";
-                localStorage.setItem('token', data.token); // Salva o token para uso futuro
-            } else {
-                messageDiv.style.color = "red";
-                messageDiv.innerText = data.message;
-            }
-        } catch (error) {
-            messageDiv.style.color = "red";
-            messageDiv.innerText = "Erro ao conectar com o servidor.";
-        }
-    }

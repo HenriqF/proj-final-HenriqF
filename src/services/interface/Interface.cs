@@ -73,7 +73,18 @@ async Task<string> Cadastrar(Cadastro dados)
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddCors(options => //marcelo aqui
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()   // This sets Access-Control-Allow-Origin: *
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
 var app = builder.Build();
+
+app.UseCors("AllowAll"); //marcelo aqui
 
 app.UseSwagger();
 app.UseSwaggerUI();
@@ -133,7 +144,7 @@ app.MapPost("/cadastro", async (Cadastro data) =>
     {
         Task<string> t  = Cadastrar(data);
         string resposta = await t;
-        return Results.Ok(resposta);    
+        return Results.Created($"/login/", new Login(data.nome, data.senha));  
     }
 
 }).WithName("Cadastro");

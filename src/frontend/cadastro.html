@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Login Moderno</title>
+    <title>Cadastro</title>
     <style>
         body { 
             font-family: sans-serif;  
@@ -25,7 +25,7 @@
             }
         }
 
-        .login-card {
+        .signup-card {
             position: absolute;
             top: 50%;
             left: 50%;
@@ -35,7 +35,8 @@
             padding-top: 1rem;
             border-radius: 8px; 
             box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
-            width: 25rem; 
+            width: 25rem;
+            display: block;
         }
 
         input { 
@@ -74,22 +75,23 @@
             font-size: 0.9rem; 
             text-align: center; 
         }
-
     </style>
 </head>
 <body>
 <p id="input"></p>
 <p id="resposta"></p>
-<div id="entras" class="login-card">
-    <h2>Login</h2>
+<div id="cadas" class="signup-card">
+    <h2>Cadastro</h2>
     <input type="text" id="username" placeholder="Usuário">
-    <input type="password" id="password" placeholder="Senha">
-    <button onclick="fazerLogin()">Entrar</button>
+    <input type="text" id="email" placeholder="E-mail">
+    <input type="text" id="password" placeholder="Senha">
+    <input type="text" id="password2" placeholder="Confirmar senha">
+    <button onclick="fazerSignup()">Cadastrar</button>
     <div id="message"></div>
-    <p onclick="trocar()">Não tem cadastro? Clique para cadastrar!</p>
+    <p onclick="trocar()">Já possui conta?</p>
 </div>
-<a id="cadastro" href="cadastro.html"></a>
+<a id="login" href="login.html"></a>
 <a id="menu" href="menu.html"></a>
-<script src="login.js"></script>
+<script src="cadastro.js"></script>
 </body>
 </html>
