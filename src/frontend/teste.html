@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        textarea{
+            width: 40px;
+            height: 40px;
+            resize: none;
+        }
+
+        .um{
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .last{
+            margin-right: 30px;    
+        }
+        .tres{
+            display: inline;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="um">
+        <textarea id="1"></textarea>
+        <textarea id="2"></textarea>
+        <textarea class="last" id="3"></textarea>
+
+        <textarea id="4"></textarea>
+        <textarea id="5"></textarea>
+        <textarea id="6"></textarea>
+        <br>
+        <textarea id="7"></textarea>
+        <textarea id="8"></textarea>
+        <textarea class="last" id="9"></textarea>
+
+        <textarea id="10"></textarea>
+        <textarea id="11"></textarea>
+        <textarea id="12"></textarea>
+        <br>
+        <br>
+        <textarea id="13"></textarea>
+        <textarea id="14"></textarea>
+        <textarea class="last" id="15"></textarea>
+
+        <textarea id="16"></textarea>
+        <textarea id="17"></textarea>
+        <textarea id="18"></textarea>
+        <br>
+        <textarea id="19"></textarea>
+        <textarea id="20"></textarea>
+        <textarea class="last" id="21"></textarea>
+
+        <textarea id="22"></textarea>
+        <textarea id="23"></textarea>
+        <textarea id="24"></textarea>
+        <br>
+        <br>
+        <textarea id="25"></textarea>
+        <textarea id="26"></textarea>
+        <textarea class="last" id="27"></textarea>
+
+        <textarea id="28"></textarea>
+        <textarea id="29"></textarea>
+        <textarea id="30"></textarea>
+        <br>
+        <textarea id="31"></textarea>
+        <textarea id="32"></textarea>
+        <textarea class="last" id="33"></textarea>
+
+        <textarea id="34"></textarea>
+        <textarea id="35"></textarea>
+        <textarea id="36"></textarea>
+        <button onclick="jogando(str)">JOGAR</button>
+        <button onclick="formatar()">FORMATAR</button>
+        <p id="resp">sss</p>
+    </div>
+    <script>
+
+        const str = "sudoku:_3__54___2__1_65___254_62______64__1";
+
+        function jogando(sudoku){
+            let len = sudoku.length
+            for(let i=1,  j=7; j<=sudoku.length;i++, j++){
+                document.getElementById("resp").textContent = "jogando"
+                if(sudoku[j]!='_'){
+                    document.getElementById(`${i}`).value = sudoku[j]
+                    document.getElementById(`${i}`).disabled = true
+                }
+            }
+        }
+
+        function formatar(){
+            let out = ""
+            for(let i=1; i<37;i++){
+                out += `${document.getElementById(`${i}`).value}`
+            }
+            document.getElementById("resp").textContent = out
+        }
+    </script>
+</body>
+</html>
