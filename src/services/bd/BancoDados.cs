@@ -141,7 +141,7 @@ public class Program
 
 
 
-    static async void testar(AppDbContext cont)
+    static async Task testar(AppDbContext cont)
     {
         Usuario? analise = await find_user(cont, "pedro");
         if (analise != null) goto deu_ruim;
@@ -150,7 +150,7 @@ public class Program
 
         if (!await new_user(cont, "pedro", "wow.com", "123")) goto deu_ruim;
 
-        Console.Write("pedro criado");
+        Console.WriteLine("pedro criado");
 
         analise = await find_user(cont, "pedro");
         if (analise == null) goto deu_ruim;
@@ -190,7 +190,7 @@ public class Program
             Environment.Exit(1);
         }
 
-        if (args[0] == "teste") testar(cont);
+        if (args.Length > 0 && args[0] == "teste") await testar(cont);
 
         
 
