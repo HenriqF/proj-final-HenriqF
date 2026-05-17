@@ -42,14 +42,6 @@ sock.onmessage = (event) => {
         jwt: ${localStorage.getItem("jwt_token")}`;
     }
 
-    if(message.startsWith("sudoku:")){
-        jogando(message);
-    }
-
-    if(message.startsWith("ganhou:")||message.startsWith("perdeu:")){
-        document.getElementById("sus").style.display="none";
-    }
-
     resposta.textContent = message;
 };
 
