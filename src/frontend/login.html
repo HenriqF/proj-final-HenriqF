@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Login Moderno</title>
+    <style>
+        body { 
+            font-family: sans-serif;  
+            background: #f0f2f5;
+            font-size: 1.4rem;
+        }
+
+        h2{
+            text-align: center;
+            color: #007bff;
+        }
+        
+        p{
+            font-size: 1rem;
+            color: grey;
+            text-align: center;
+            &:hover{
+                cursor: pointer;
+                color: rgb(83, 83, 83);
+            }
+        }
+
+        .login-card {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white; 
+            padding: 2rem;
+            padding-top: 1rem;
+            border-radius: 8px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+            width: 25rem; 
+        }
+
+        .signup-card {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white; 
+            padding: 2rem;
+            padding-top: 1rem;
+            border-radius: 8px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+            width: 25rem;
+            display: none;
+        }
+
+        input { 
+            width: 100%;
+            height: 3rem;
+            padding: 10px; 
+            margin: 10px 0; 
+            box-sizing: border-box; 
+            border: none;
+            box-shadow: 0 0 5px 1px rgba(0,0,0,.2) inset;
+            border-radius: 3px;
+            font-size: 1.2rem;
+            &:focus{
+                outline-color: #007bff;
+            }
+        }
+
+        button { 
+            width: 100%; 
+            padding: 1rem;
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            cursor: pointer; 
+            margin-top: 1rem;
+            margin-bottom: 0rem;
+            font-size: 1.3rem;
+            &:hover{
+                background: #005fd3;
+            }
+        }
+
+        #message { 
+            margin-top: 10px; 
+            font-size: 0.9rem; 
+            text-align: center; 
+        }
+        #message2 { 
+            margin-top: 10px; 
+            font-size: 0.9rem; 
+            text-align: center; 
+        }
+    </style>
+</head>
+<body>
+<p id="input"></p>
+<p id="resposta"></p>
+<div id="entras" class="login-card">
+    <h2>Login</h2>
+    <input type="text" id="username" placeholder="Usuário">
+    <input type="password" id="password" placeholder="Senha">
+    <button onclick="fazerLogin()">Entrar</button>
+    <div id="message"></div>
+    <p onclick="trocar(1)">Não tem cadastro? Clique para cadastrar!</p>
+</div>
+
+<div id="cadas" class="signup-card">
+    <h2>Cadastro</h2>
+    <input type="text" id="username2" placeholder="Usuário">
+    <input type="text" id="email" placeholder="E-mail">
+    <input type="text" id="password2" placeholder="Senha">
+    <input type="text" id="password3" placeholder="Confirmar senha">
+    <button onclick="fazerSignup()">Cadastrar</button>
+    <div id="message2"></div>
+    <p onclick="trocar(2)">Já possui conta?</p>
+</div>
+<a id="sudoku" href="front.html"></a>
+<a id="menu" href="menu.html"></a>
+<script src="client.js"></script>
+</body>
+</html>
