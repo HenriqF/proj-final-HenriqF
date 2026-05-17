@@ -61,6 +61,8 @@ sock.onclose = () => {
     setTimeout(ligar, 200);
 };
 
+
+
 //LOGIN & SIGN UP
 function trocar(n){
     let log = document.getElementById("entras");
