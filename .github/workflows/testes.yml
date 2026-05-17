@@ -1,0 +1,27 @@
+name: Testes
+
+
+on: [push, pull_request]
+
+
+env:
+  HOST: 127.0.0.1
+  MYSQL_DATABASE: bd
+  MYSQL_ROOT_PASSWORD: 123
+
+
+jobs:
+  testar-banco-de-dados:
+    runs-on: ubuntu-latest
+
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: docker
+        working-directory: src/services/bd
+        run: docker compose up -d --build --wait
+        
+      - name: servico
+        working-directory: src/services/bd
+        run: dotnet run teste

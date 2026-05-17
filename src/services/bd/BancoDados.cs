@@ -45,7 +45,7 @@ public class AppDbContext : DbContext
 
         var builder = new MySqlConnectionStringBuilder
         {
-            Server = "127.0.0.1",
+            Server = Environment.GetEnvironmentVariable("HOST"),
             Port = 3306,
             Database = Environment.GetEnvironmentVariable("MYSQL_DATABASE"),
             UserID = "root",
@@ -64,6 +64,8 @@ public class AppDbContext : DbContext
             .HasForeignKey<Stats>(s => s.user_id);
     }
 }
+
+
 
 public class Program
 {
@@ -89,15 +91,13 @@ public class Program
             await cont.SaveChangesAsync();
 
         }
-        catch (Exception e)
+        catch
         {
-            Console.WriteLine($"{e}");
             return false;
         }
 
         return true;
     }
-
 
     static async Task<Usuario?> find_user(AppDbContext cont, string nome)
     {
@@ -139,6 +139,42 @@ public class Program
         return user;
     }
 
+
+
+    static async Task testar(AppDbContext cont)
+    {
+        Usuario? analise = await find_user(cont, "pedro");
+        if (analise != null) goto deu_ruim;
+
+        Console.WriteLine("pedro não exite");
+
+        if (!await new_user(cont, "pedro", "wow.com", "123")) goto deu_ruim;
+
+        Console.WriteLine("pedro criado");
+
+        analise = await find_user(cont, "pedro");
+        if (analise == null) goto deu_ruim;
+
+        Console.WriteLine($"pedro existe: {analise.email} {analise.id}");
+
+
+        await new_user(cont, "pedro_sigma", "wow.com@hudson", "12344", 1200);
+        await new_user(cont, "almeida", "al@hudson", "12344", 950);
+        await new_user(cont, "roberto", "bert@hudson", "12344", 5500);
+        await new_user(cont, "hudson", "maxmilneclimb@hudson", "12344", 5600);
+        await new_user(cont, "daniel", "janjagarnbret@hudson", "12344", 2200);
+        await new_user(cont, "joao", "aimori@hudson", "12344", 2256);
+
+
+        Environment.Exit(0);
+
+
+        deu_ruim:
+            Console.WriteLine("Deu Ruim");
+            Environment.Exit(1);
+    }
+
+
     static async Task Main(string[] args)
     {
         Console.WriteLine("==============");
@@ -151,22 +187,16 @@ public class Program
         if (!cont.Database.CanConnect())
         {
             Console.WriteLine("sem conexao banco");
-            return;
+            Environment.Exit(1);
         }
 
+        if (args.Length > 0 && args[0] == "teste") await testar(cont);
 
-
-        // await new_user(cont, "pedro", "wow.com", "123");
-        // await new_user(cont, "pedro_sigma", "wow.com@porra", "12344", 1200);
-        // await new_user(cont, "almeida", "al@porra", "12344", 950);
-        // await new_user(cont, "roberto", "bert@porra", "12344", 5500);
-        // await new_user(cont, "porra", "maxmilneclimb@porra", "12344", 5600);
-        // await new_user(cont, "daniel", "janjagarnbret@porra", "12344", 2200);
-        // await new_user(cont, "joao", "aimori@porra", "12344", 2256);
-
+        
 
         var builder = WebApplication.CreateBuilder(args);
         var app = builder.Build();
+
 
         app.MapGet("/stats/{nome}", async (string nome) =>
         {
@@ -203,9 +233,6 @@ public class Program
             return Results.Ok(new user_info(analise.nome, analise.email, _senhaHash, _senhaSalt));
         });
         
-
-       
-
         app.MapPost("/cadastrar", async (Cadastro cadastro) =>
         {
             try
@@ -224,8 +251,6 @@ public class Program
                 return Results.Conflict("nnao criado");
             }
         });
-
-
 
 
         app.Run();
