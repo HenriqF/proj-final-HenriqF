@@ -1,12 +1,25 @@
-function trocar(){
-    document.getElementById("login").click();
-};
-
 const userCadastro = document.getElementById("username");
 const emailCadastro = document.getElementById("email");
 const senhaCadastro = document.getElementById("password");
 const senhaConfirm = document.getElementById("password2");
 const mensagem = document.getElementById("message");
+
+
+function mostrar_senha(){
+    senhaCadastro.type = "text";
+    senhaConfirm.type = "text";
+};
+
+function esconder_senha(){
+    senhaCadastro.type = "password";
+    senhaConfirm.type = "password";
+};
+
+
+function trocar(){
+    document.getElementById("login").click();
+};
+
 
 async function fazerSignup(){
     if(!validarCadastro()){
