@@ -305,13 +305,22 @@ public class Program
                 return Results.NotFound("Coagulo nao tem stats?");
             }
 
-            return Results.Ok( new{
+            int g_pos = cont.sudoku_stats.Count(s => s.user_elo > analise.Stats.user_elo) + 1;
+
+
+
+            return Results.Ok( new user_stats(
+                analise.id,
+                analise.email!,
                 analise.foto_link,
-                elo = analise.Stats.user_elo,
-                vitorias = analise.Stats.qtd_jogos_ganhos,
-                Partida = analise.Stats.qtd_jogos_jogados,
+
+                analise.Stats.user_elo,
+                analise.Stats.qtd_jogos_ganhos,
+                analise.Stats.qtd_jogos_jogados,
                 analise.Stats.melhor_tempo,
-            });
+
+                g_pos
+            ));
         });
 
         app.MapGet("/find/{nome}", async (string nome) =>
@@ -327,7 +336,7 @@ public class Program
             string _senhaSalt = Convert.ToBase64String(analise.senha_salt);
 
 
-            return Results.Ok(new user_info(analise.nome, analise.email, _senhaHash, _senhaSalt));
+            return Results.Ok(new user_private_info(analise.nome, analise.email, _senhaHash, _senhaSalt));
         });
         
         app.MapPost("/cadastrar", async (Cadastro cadastro) =>
@@ -341,7 +350,7 @@ public class Program
                 }
 
                 await novo_user(cont, cadastro.nome, cadastro.email, cadastro.senha);
-                return Results.Ok(new user_info(cadastro.nome, cadastro.email, "", ""));
+                return Results.Ok(new user_private_info(cadastro.nome, cadastro.email, "", ""));
             }
             catch
             {
