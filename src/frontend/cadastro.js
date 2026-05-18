@@ -41,10 +41,10 @@ async function fazerSignup(){
         }
 
         const data  = await response.json();
+        mensagem.style.color = "green";
         mensagem.innerText = `seja bem vindo, ${data["nome"]}`;
 
     } catch (error) {
-        mensagem.style.color = "red";
         mensagem.innerText = "Erro";
     }
 }
@@ -59,7 +59,12 @@ function validarCadastro(){
     }
 
     if(!regex.test(userCadastro.value)||!regex2.test(emailCadastro.value)||!regex.test(senhaCadastro.value)){
-        mensagem.innerText = "Caracteres especiais não são permitidos!";
+        mensagem.innerText = "Somente letras e números são permitidos!";
+        return false;
+    }
+
+    if((userCadastro.value).length > 13){
+        mensagem.innerText = "Usuário muito longo! (limite de 13 caracteres)";
         return false;
     }
 
