@@ -227,7 +227,6 @@ public class WebSocketServer
 
                 Console.WriteLine($"novo cliente: {client_id}");
                 await MessageClientAsync($"voce é {client_id}", web_socket);
-                
                 await HandleClientAsync(client_id, web_socket);
             }
             catch 

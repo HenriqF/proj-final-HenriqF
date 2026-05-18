@@ -17,6 +17,8 @@ public class Usuario
     public string? nome {get; set;}
 
     public Stats? Stats { get; set; }
+    public ICollection<Partida>? JogosUserGanhador {get; set;}
+    public ICollection<Partida>? JogosUserDerrotado {get; set;}
 }
 
 public class Stats
@@ -30,6 +32,17 @@ public class Stats
 
 
     public Usuario? Usuario { get; set; }
+}
+
+public class Partida
+{
+    public int id {get; set;}
+    public int user_ganhador {get; set;}
+    public int user_derrotado {get; set;}
+    public string? tabuleiros {get;set;}
+
+    public Usuario? UserGanhador { get; set; }
+    public Usuario? UserDerrotado { get; set; }
 }
 
 
@@ -59,16 +72,33 @@ public class AppDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Usuario>()
-            .HasOne(u => u.Stats).WithOne(s => s.Usuario)
-            .HasForeignKey<Stats>(s => s.user_id);
+        modelBuilder.Entity<Usuario>(user =>
+        {   
+            user.ToTable("usuarios");
+            user.HasKey(u => u.id);
+
+
+            user.HasOne(u => u.Stats).WithOne(s => s.Usuario).HasForeignKey<Stats>(s => s.user_id);
+        });
+
+        modelBuilder.Entity<Partida>(part =>
+        {
+            part.ToTable("partidas");
+            part.HasKey(p => p.id);
+
+            part.HasOne(p => p.UserGanhador).WithMany(u => u.JogosUserGanhador).HasForeignKey(p => p.user_ganhador).OnDelete(DeleteBehavior.Restrict);
+            part.HasOne(p => p.UserDerrotado).WithMany(u => u.JogosUserDerrotado).HasForeignKey(p => p.user_derrotado).OnDelete(DeleteBehavior.Restrict);
+        });
     }
 }
 
 
 
+
+
 public class Program
 {
+
     static async Task<bool> new_user(AppDbContext cont, string nome, string email, string senha, int elo = 1000)
     {
         try
@@ -119,6 +149,36 @@ public class Program
         return user;
     }
 
+    static async Task<bool> new_match(AppDbContext cont, string ganhador, string derrotado, string tabuleiros)
+    {
+        try
+        {
+            Usuario? u_ganhador = await find_user(cont, ganhador);
+            Usuario? u_derrotado = await find_user(cont, derrotado);
+            if (u_ganhador == null || u_derrotado == null)
+            {
+                return false;
+            }
+
+            Partida nova = new Partida
+            {
+                user_ganhador = u_ganhador.id,
+                user_derrotado = u_derrotado.id,
+                tabuleiros = tabuleiros
+            };
+
+            cont.Add(nova);
+            await cont.SaveChangesAsync();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"{e}");
+            return false;
+        }
+        return true;
+    }
+
+
     static async Task<Usuario?> userDoEmail(AppDbContext cont, string email)
     {
         Usuario? user = null;
@@ -141,6 +201,9 @@ public class Program
 
 
 
+
+
+
     static async Task testar(AppDbContext cont)
     {
         Usuario? analise = await find_user(cont, "pedro");
@@ -155,10 +218,18 @@ public class Program
         analise = await find_user(cont, "pedro");
         if (analise == null) goto deu_ruim;
 
-        Console.WriteLine($"pedro existe: {analise.email} {analise.id}");
+        Console.WriteLine($"pedro existe: {analise.id}");
+
+        if (!await new_user(cont, "pedro_sigma", "wow.com@hudson", "12344", 1200)) goto deu_ruim;
+        Console.WriteLine("pedro_sigma criado");
+
+        if (!await new_match(cont, "pedro", "pedro_sigma", "abc")) goto deu_ruim;
+        Console.WriteLine($"Criada partida entre pedro e pedro_sigma");
 
 
-        await new_user(cont, "pedro_sigma", "wow.com@hudson", "12344", 1200);
+
+
+
         await new_user(cont, "almeida", "al@hudson", "12344", 950);
         await new_user(cont, "roberto", "bert@hudson", "12344", 5500);
         await new_user(cont, "hudson", "maxmilneclimb@hudson", "12344", 5600);
@@ -214,7 +285,7 @@ public class Program
             return Results.Ok( new{
                 elo = analise.Stats.user_elo,
                 vitorias = analise.Stats.qtd_jogos_ganhos,
-                partidas = analise.Stats.qtd_jogos_jogados,
+                Partida = analise.Stats.qtd_jogos_jogados,
                 melhor_tempo = analise.Stats.melhor_tempo,
             });
         });
