@@ -7,16 +7,20 @@ public record new_sudokus(string[] boards);
 public record api_message(string message);
 
 public record user_stats(
+    int id,
+    string email,
+    string? foto_link,
 
-    [property: JsonPropertyName("elo")] int elo,
-    [property: JsonPropertyName("vitorias")]int vitorias,
-    [property: JsonPropertyName("partidas")]int partidas,
-    [property: JsonPropertyName("melhor_tempo")]int melhor_tempo
+    int elo,
+    int vitorias,
+    int partidas,
+    int melhor_tempo,
 
+    int pos_global
 );
 
 
-public record user_info ( 
+public record user_private_info ( 
     string nome,
     string email,
     string hash,

@@ -113,7 +113,7 @@ app.MapPost("/login", async (Login data) =>
     try
     {
         var client = new HttpClient();  
-        user_info? dados = await client.GetFromJsonAsync<user_info>(
+        user_private_info? dados = await client.GetFromJsonAsync<user_private_info>(
             $"http://localhost:5127/find/{data.nome}"
         );
 
@@ -153,7 +153,7 @@ app.MapPost("/cadastro", async (Cadastro data) =>
     try
     {
         var client = new HttpClient();  
-        user_info? dados = await client.GetFromJsonAsync<user_info>(
+        user_private_info? dados = await client.GetFromJsonAsync<user_private_info>(
             $"http://localhost:5127/find/{data.nome}"
         );
         return Results.Conflict("Coagulo já existe");
@@ -170,6 +170,25 @@ app.MapPost("/cadastro", async (Cadastro data) =>
 
 }).WithName("Cadastro");
 
+
+app.MapGet("/stats/{nome}", async (string nome) => {
+    var client = new HttpClient();
+
+
+    var response = await client.GetAsync($"http://localhost:5127/stats/{nome}");
+
+    if (! response.IsSuccessStatusCode)
+    {
+        return Results.NotFound("coagulo inexistente?");
+    }
+
+
+    var stats = await client.GetFromJsonAsync<user_stats>(
+        $"http://localhost:5127/stats/{nome}"
+    );
+
+    return Results.Ok(stats);
+}).WithName("GetUserStats");
 
 
 app.Run();
