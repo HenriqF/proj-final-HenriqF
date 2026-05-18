@@ -27,12 +27,12 @@ CREATE TABLE IF NOT EXISTS sudoku_stats (
 CREATE TABLE IF NOT EXISTS partidas (
 
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
+    user_ganhador INT NOT NULL,
+    user_derrotado INT NOT NULL,
 
     tabuleiros VARCHAR(255),
-    resultado VARCHAR(255),
-    elo_diff INT,
 
-    FOREIGN KEY (user_id) REFERENCES usuarios(id) ON DELETE CASCADE
+    FOREIGN KEY (user_ganhador) REFERENCES usuarios(id),
+    FOREIGN KEY (user_derrotado) REFERENCES usuarios(id)
 
-) ENGINE = InnoDB
+) ENGINE = InnoDB;
