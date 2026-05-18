@@ -32,7 +32,6 @@ async function fazerLogin(){
         mensagem.innerText = data;
 
     } catch (error) {
-        mensagem.style.color = "red";
         mensagem.innerText = "Erro ao conectar com o servidor.";
     }
     
@@ -47,6 +46,7 @@ function validarLogin(){
     }
 
     if(!regex.test(userLogin.value)||!regex.test(senhaLogin.value)){
+        mensagem.innerText = "Somente letras e números são permitidos!";
         return false;
     }
     return true;
