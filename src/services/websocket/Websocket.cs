@@ -197,6 +197,7 @@ public class WebSocketServer
     }
 
 
+
     public static void Main(string[] args)
     {
         Console.WriteLine("===================");
@@ -206,7 +207,7 @@ public class WebSocketServer
 
         var builder = WebApplication.CreateBuilder(args);
         var app = builder.Build();
-
+        //app.UseHttpsRedirection();
         app.UseWebSockets();
 
         app.Map("/ws", async context =>

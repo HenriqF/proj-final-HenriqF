@@ -85,6 +85,8 @@ app.UseCors("AllowAll"); //marcelo aqui
 
 app.UseSwagger();
 app.UseSwaggerUI();
+app.UseHttpsRedirection();
+
 
 app.MapPost("/login", async (Login data) =>
 {   
