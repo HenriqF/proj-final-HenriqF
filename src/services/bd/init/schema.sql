@@ -4,7 +4,8 @@ CREATE TABLE IF NOT EXISTS usuarios (
     email VARCHAR(255) NOT NULL UNIQUE,
     senha_hash VARBINARY(128) NOT NULL,
     senha_salt VARBINARY(128) NOT NULL,
-    nome VARCHAR(255) NOT NULL UNIQUE
+    nome VARCHAR(255) NOT NULL UNIQUE,
+    foto_link VARCHAR(255)
 
 ) ENGINE=InnoDB;
 

@@ -88,6 +88,25 @@ app.UseSwaggerUI();
 app.UseHttpsRedirection();
 
 
+app.MapGet("/leaderboard", async () =>
+{
+    var client = new HttpClient();
+
+    var response = await client.GetAsync("http://localhost:5127/leaderboard");
+
+    if (! response.IsSuccessStatusCode)
+    {
+        return Results.NoContent();
+    }
+
+    var dados = await client.GetFromJsonAsync<List<player_elo_rel>>("http://localhost:5127/leaderboard");
+
+    var formatado = dados!.Select(u => new object[] {u.nome, u.elo}).ToList();
+
+    return Results.Ok(formatado);
+});
+
+
 app.MapPost("/login", async (Login data) =>
 {   
 

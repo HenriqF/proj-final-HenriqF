@@ -22,3 +22,8 @@ public record user_info (
     string hash,
     string salt
 );
+
+public record player_elo_rel (
+    string nome,
+    int elo
+);

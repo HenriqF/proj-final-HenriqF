@@ -7,6 +7,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Reflection.Metadata;
 using System.Security.Cryptography; /* eu MARCELO botei isso */
 using contracts;
+using System.Text.Json;
 public class Usuario
 {
     public int id {get; set;}
@@ -15,6 +16,8 @@ public class Usuario
 
     public byte[]? senha_salt {get; set;}
     public string? nome {get; set;}
+
+    public string? foto_link {get; set;}
 
     public Stats? Stats { get; set; }
     public ICollection<Partida>? JogosUserGanhador {get; set;}
@@ -95,14 +98,37 @@ public class AppDbContext : DbContext
 
 
 
-
 public class Program
 {
 
-    static async Task<bool> new_user(AppDbContext cont, string nome, string email, string senha, int elo = 1000)
+    static async Task<(string nome, int elo)[]?> leaderboard(AppDbContext cont)
     {
         try
         {
+            (string, int)[]? tp = await cont.usuarios.Join(cont.sudoku_stats, u => u.id, s => s.user_id, (u, s) => new { u.nome, s.user_elo })
+                                        .OrderByDescending(i => i.user_elo)
+                                        .Take(100)
+                                        .Select(i => ValueTuple.Create(i.nome!, i.user_elo))
+                                        .ToArrayAsync();
+
+            
+            return tp.Length > 0 ? tp : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    static async Task<bool> novo_user(AppDbContext cont, string nome, string email, string senha, int elo = 1000, string foto_link = ".")
+    {
+        try
+        {
+            if (!foto_link.StartsWith("https://i.pinimg.com/"))
+            {
+                foto_link = "https://i.pinimg.com/1200x/36/bd/a2/36bda22a62ac3d53be8c6664e7f0df31.jpg";
+            }
+
             using var hmac = new HMACSHA512();
             
             byte[] senhaSalt = hmac.Key;
@@ -114,6 +140,7 @@ public class Program
                 senha_hash = senhaHash,
                 senha_salt = senhaSalt,
                 nome = nome,
+                foto_link = foto_link,
                 Stats = new Stats{user_elo = elo},
             };
 
@@ -149,7 +176,7 @@ public class Program
         return user;
     }
 
-    static async Task<bool> new_match(AppDbContext cont, string ganhador, string derrotado, string tabuleiros)
+    static async Task<bool> nova_partida(AppDbContext cont, string ganhador, string derrotado, string tabuleiros)
     {
         try
         {
@@ -177,7 +204,6 @@ public class Program
         }
         return true;
     }
-
 
     static async Task<Usuario?> userDoEmail(AppDbContext cont, string email)
     {
@@ -211,7 +237,7 @@ public class Program
 
         Console.WriteLine("pedro não exite");
 
-        if (!await new_user(cont, "pedro", "wow.com", "123")) goto deu_ruim;
+        if (!await novo_user(cont, "pedro", "wow.com", "123")) goto deu_ruim;
 
         Console.WriteLine("pedro criado");
 
@@ -220,21 +246,18 @@ public class Program
 
         Console.WriteLine($"pedro existe: {analise.id}");
 
-        if (!await new_user(cont, "pedro_sigma", "wow.com@hudson", "12344", 1200)) goto deu_ruim;
+        if (!await novo_user(cont, "pedro_sigma", "wow.com@hudson", "12344", 1200)) goto deu_ruim;
         Console.WriteLine("pedro_sigma criado");
 
-        if (!await new_match(cont, "pedro", "pedro_sigma", "abc")) goto deu_ruim;
+        if (!await nova_partida(cont, "pedro", "pedro_sigma", "abc")) goto deu_ruim;
         Console.WriteLine($"Criada partida entre pedro e pedro_sigma");
 
 
-
-
-
-        await new_user(cont, "almeida", "al@hudson", "12344", 950);
-        await new_user(cont, "roberto", "bert@hudson", "12344", 5500);
-        await new_user(cont, "hudson", "maxmilneclimb@hudson", "12344", 5600);
-        await new_user(cont, "daniel", "janjagarnbret@hudson", "12344", 2200);
-        await new_user(cont, "joao", "aimori@hudson", "12344", 2256);
+        await novo_user(cont, "almeida", "al@hudson", "12344", 950);
+        await novo_user(cont, "roberto", "bert@hudson", "12344", 5500);
+        await novo_user(cont, "hudson", "maxmilneclimb@hudson", "12344", 5600);
+        await novo_user(cont, "daniel", "janjagarnbret@hudson", "12344", 2200);
+        await novo_user(cont, "joao", "aimori@hudson", "12344", 2256);
 
 
         Environment.Exit(0);
@@ -283,16 +306,18 @@ public class Program
             }
 
             return Results.Ok( new{
+                analise.foto_link,
                 elo = analise.Stats.user_elo,
                 vitorias = analise.Stats.qtd_jogos_ganhos,
                 Partida = analise.Stats.qtd_jogos_jogados,
-                melhor_tempo = analise.Stats.melhor_tempo,
+                analise.Stats.melhor_tempo,
             });
         });
 
         app.MapGet("/find/{nome}", async (string nome) =>
         {
             Usuario? analise = await find_user(cont, nome);
+            
             if (analise == null|| analise.senha_hash==null||analise.senha_salt ==null ||analise.nome==null||analise.email==null)
             {
                 return Results.NotFound("Coagulo nao existe");
@@ -315,7 +340,7 @@ public class Program
                     return Results.Conflict("nnao criado");
                 }
 
-                await new_user(cont, cadastro.nome, cadastro.email, cadastro.senha);
+                await novo_user(cont, cadastro.nome, cadastro.email, cadastro.senha);
                 return Results.Ok(new user_info(cadastro.nome, cadastro.email, "", ""));
             }
             catch
@@ -324,7 +349,16 @@ public class Program
             }
         });
 
-
+        app.MapGet("/leaderboard", async () =>
+        {
+            (string nome, int elo)[]? res = await leaderboard(cont);
+            if (res == null)
+            {
+                return Results.NoContent();
+            }
+ 
+            return Results.Ok(res.Select(u => new {u.nome, u.elo}));
+        });
         app.Run();
     }
 
