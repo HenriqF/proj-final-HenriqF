@@ -75,6 +75,11 @@
             text-align: center; 
         }
 
+        #curto{
+            margin: 0px;
+            text-align: left;
+        }
+
     </style>
 </head>
 <body>
@@ -84,6 +89,7 @@
     <h2>Login</h2>
     <input type="text" id="username" placeholder="Usuário">
     <input type="password" id="password" placeholder="Senha">
+    <p onmousedown="mostrar_senha()" onmouseup="esconder_senha()" id="curto">Mostrar senha</p>
     <button onclick="fazerLogin()">Entrar</button>
     <div id="message"></div>
     <p onclick="trocar()">Não tem cadastro? Clique para cadastrar!</p>

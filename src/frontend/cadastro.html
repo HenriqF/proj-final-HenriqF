@@ -75,6 +75,11 @@
             font-size: 0.9rem; 
             text-align: center; 
         }
+
+        #curto{
+            margin: 0px;
+            text-align: left;
+        }
     </style>
 </head>
 <body>
@@ -84,8 +89,9 @@
     <h2>Cadastro</h2>
     <input type="text" id="username" placeholder="Usuário">
     <input type="text" id="email" placeholder="E-mail">
-    <input type="text" id="password" placeholder="Senha">
-    <input type="text" id="password2" placeholder="Confirmar senha">
+    <input type="password" id="password" placeholder="Senha">
+    <input type="password" id="password2" placeholder="Confirmar senha">
+    <p onmousedown="mostrar_senha()" onmouseup="esconder_senha()" id="curto">Mostrar senha</p>
     <button onclick="fazerSignup()">Cadastrar</button>
     <div id="message"></div>
     <p onclick="trocar()">Já possui conta?</p>

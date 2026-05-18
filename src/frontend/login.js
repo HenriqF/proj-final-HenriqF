@@ -1,10 +1,18 @@
-function trocar(){
-    document.getElementById("cadastro").click();
-};
-
 const userLogin = document.getElementById("username");
 const senhaLogin = document.getElementById("password");
 const mensagem = document.getElementById("message");
+
+function mostrar_senha(){
+    senhaLogin.type = "text";
+};
+
+function esconder_senha(){
+    senhaLogin.type = "password";
+};
+
+function trocar(){
+    document.getElementById("cadastro").click();
+};
 
 async function fazerLogin(){
     if(!validarLogin()){
