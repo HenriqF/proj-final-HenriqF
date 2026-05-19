@@ -20,6 +20,14 @@ public record user_stats(
 );
 
 
+public record change_user_info(
+    string email,
+    string nome,
+    string senha,
+    string foto
+);
+
+
 public record user_private_info ( 
     string nome,
     string email,

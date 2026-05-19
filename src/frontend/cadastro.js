@@ -41,8 +41,10 @@ async function fazerSignup(){
         }
 
         const data  = await response.json();
+        
         mensagem.style.color = "green";
         mensagem.innerText = `seja bem vindo, ${data["nome"]}`;
+        fazerLogin();
 
     } catch (error) {
         mensagem.innerText = "Erro";
@@ -74,3 +76,24 @@ function validarCadastro(){
     }
     return true;
 }
+
+async function fazerLogin(){
+    try {
+
+        const response = await fetch('http://localhost:5269/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ "nome": userCadastro.value, "senha": senhaCadastro.value })
+        });
+
+        const data = await response.json();
+
+        localStorage.setItem("token", data);
+        localStorage.setItem("user", userCadastro.value);
+        document.getElementById("menu").click();
+
+    } catch (error) {
+        mensagem.innerText = "Erro ao conectar com o servidor.";
+    }
+    
+};

@@ -8,6 +8,8 @@ using System.Reflection.Metadata;
 using System.Security.Cryptography; /* eu MARCELO botei isso */
 using contracts;
 using System.Text.Json;
+
+
 public class Usuario
 {
     public int id {get; set;}
@@ -291,6 +293,35 @@ public class Program
         var builder = WebApplication.CreateBuilder(args);
         var app = builder.Build();
         app.UseHttpsRedirection();
+
+
+
+
+        app.MapPut("/trocardados/", async (change_user_info upi) => {
+            var user = cont.usuarios.FirstOrDefault(u => u.email == upi.email);
+
+
+            if (user != null){
+                if (upi.nome != null && upi.nome != "") user.nome = upi.nome;
+                if (upi.foto != null && upi.foto != "") user.foto_link = upi.foto;
+                if (upi.senha != null && upi.senha != "") {
+                    using var hmac = new HMACSHA512();
+                    byte[] senhaSalt = hmac.Key;
+                    byte[] senhaHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(upi.senha));
+                    user.senha_hash = senhaHash;
+                    user.senha_salt = senhaSalt;
+
+
+                }
+                cont.SaveChanges();
+
+                return Results.Ok("alterado");
+            }
+
+            return Results.Unauthorized();
+        });
+
+
 
 
         app.MapGet("/stats/{nome}", async (string nome) =>
