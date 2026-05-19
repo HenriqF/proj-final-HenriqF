@@ -21,7 +21,7 @@ async function fazerLogin(){
     
     try {
 
-        const response = await fetch('http://localhost:5269/login', {
+        const response = await fetch(`http://${host}:5269/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ "nome": userLogin.value, "senha": senhaLogin.value })
@@ -29,6 +29,11 @@ async function fazerLogin(){
 
         const data = await response.json();
 
+        if(data==="CREDINV"){
+            mensagem.innerText = "Credenciais Inválidas!";
+            return;
+        }
+        
         localStorage.setItem("token", data);
         localStorage.setItem("user", userLogin.value);
         document.getElementById("menu").click();

@@ -13,22 +13,36 @@
                 <img src="https://i.pinimg.com/736x/2d/0f/54/2d0f54b3cae58511c4d47b464d445f1c.jpg" id="foto">
                 <div id="perfil-info">
                     <p id="nome">Marcelo</p>
-                    <p id="email">marcelo@gmail.com</p>                     
+                    <p id="user_email">marcelo@gmail.com</p>                     
                 </div>
             </div>
         </div>
         <br>
         <div id="dados">
             <h2>Mudar Dados</h2>
-            <input type="text" id="username" placeholder="Nome">
-            <input type="text" id="email" placeholder="E-mail">
-            <input type="password" id="password" placeholder="Nova senha">
-            <input type="password" id="password2" placeholder="Confirmar nova senha">
-            <input type="password" id="password3" placeholder="Confirmar nova senha">
+            <div onchange="change(3)" id="categorias">
+                <input class="check" type="checkbox" id="check_nome" checked>
+                <label>Nome</label>
+                <input class="check" type="checkbox" id="check_foto" checked>
+                <label>Foto de perfil</label>
+                <input class="check" type="checkbox" id="check_senha" unchecked>
+                <label>Senha</label>
+            </div>
+            <br>
+            <input onchange="change(1)" class="input" type="text" id="username" placeholder="Nome">
+            <input onchange="change(2)" class="input" type="text" id="user_foto" placeholder="URL Foto de perfil">
+            <input class="input" type="password" id="password" style="display: none;" placeholder="Nova senha">
+            <input class="input" type="password" id="password2" style="display: none;" placeholder="Confirmar nova senha">
+            <input class="input" type="password" id="password3" placeholder="Sua senha atual">
             <p onmousedown="mostrar_senha()" onmouseup="esconder_senha()" id="curto">Mostrar senha</p>
-            <button onclick="fazerSignup()">Cadastrar</button>
+            <button onclick="validarDados()">Confirmar</button>
             <div id="message"></div>
-            <p onclick="trocar()">Já possui conta?</p>
+            <p onclick="cancelar()">CANCELAR</p>
     </div>
+    <a href="menu.html" id="menu"></a>
+    <a href="login.html" id="login"></a>
+    
+    <script src="persistent.js"></script>
+    <script src="mudar_info.js"></script>
 </body>
 </html>
