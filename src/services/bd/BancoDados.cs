@@ -44,6 +44,10 @@ public class Partida
     public int id {get; set;}
     public int user_ganhador {get; set;}
     public int user_derrotado {get; set;}
+
+    public int user_ganhador_elo {get; set;}
+    public int user_derrotado_elo {get; set;}
+
     public string? tabuleiros {get;set;}
 
     public Usuario? UserGanhador { get; set; }
@@ -103,14 +107,14 @@ public class AppDbContext : DbContext
 public class Program
 {
 
-    static async Task<(string nome, int elo)[]?> leaderboard(AppDbContext cont)
+    static async Task<(string nome, int elo, string foto)[]?> leaderboard(AppDbContext cont)
     {
         try
         {
-            (string, int)[]? tp = await cont.usuarios.Join(cont.sudoku_stats, u => u.id, s => s.user_id, (u, s) => new { u.nome, s.user_elo })
+            (string, int, string)[]? tp = await cont.usuarios.Join(cont.sudoku_stats, u => u.id, s => s.user_id, (u, s) => new { u.nome, s.user_elo, u.foto_link })
                                         .OrderByDescending(i => i.user_elo)
                                         .Take(100)
-                                        .Select(i => ValueTuple.Create(i.nome!, i.user_elo))
+                                        .Select(i => ValueTuple.Create(i.nome!, i.user_elo, i.foto_link!))
                                         .ToArrayAsync();
 
             
@@ -158,6 +162,44 @@ public class Program
         return true;
     }
 
+
+    static async Task<bool> trocar_user_elo(AppDbContext cont, string nome, int elo)
+    {
+        Usuario? user = await cont.usuarios.Include(u => u.Stats).FirstOrDefaultAsync(u => u.nome == nome);
+        if (user == null) return false;
+        
+        user.Stats!.user_elo = elo;
+
+        cont.SaveChanges();
+        return true;
+    }
+
+    static async Task<bool> trocar_user_dados(AppDbContext cont, change_user_info cui)
+    {
+        Usuario? user = await cont.usuarios.FirstOrDefaultAsync(u => u.email == cui.email);
+
+        if (user == null) return false;
+
+        if (cui.nome != null && cui.nome != "")
+        {
+            Usuario? procura = await find_user(cont, cui.nome);
+            if (procura == null) user.nome = cui.nome;
+        } 
+        if (cui.foto != null && cui.foto != "") user.foto_link = cui.foto;
+        if (cui.senha != null && cui.senha != "") {
+            using var hmac = new HMACSHA512();
+            byte[] senhaSalt = hmac.Key;
+            byte[] senhaHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(cui.senha));
+            user.senha_hash = senhaHash;
+            user.senha_salt = senhaSalt;
+
+
+        }
+
+        cont.SaveChanges();
+        return true;
+    }
+
     static async Task<Usuario?> find_user(AppDbContext cont, string nome)
     {
         Usuario? user = null;
@@ -193,6 +235,8 @@ public class Program
             {
                 user_ganhador = u_ganhador.id,
                 user_derrotado = u_derrotado.id,
+                user_ganhador_elo = u_ganhador.Stats!.user_elo,
+                user_derrotado_elo = u_derrotado.Stats!.user_elo,
                 tabuleiros = tabuleiros
             };
 
@@ -269,6 +313,38 @@ public class Program
             Console.WriteLine("Deu Ruim");
             Environment.Exit(1);
     }
+    static async Task popular(AppDbContext cont)
+    {
+        await novo_user(cont, "patrick", "pátrique@mail", "12344", 900);
+        await novo_user(cont, "almeida", "aalmida@mail", "12344", 950);
+
+        await novo_user(cont, "brick", "mailmailmail", "12344", 1000);
+        await novo_user(cont, "dewey", "godisdead@com", "12344", 1050);
+
+        await novo_user(cont, "roberto", "bert@hudson", "12344", 5500);
+        await novo_user(cont, "hudson", "maxmilneclimb@hudson", "12344", 5600);
+
+        await novo_user(cont, "daniel", "janjagarnbret@hudson", "12344", 2200);
+        await novo_user(cont, "joao", "aimori@hudson", "12344", 2256);
+
+        await novo_user(cont, "batman", "batman@notbruce.com", "123", 2256);
+        await novo_user(cont, "jokler", "ysosirius@yahoo.com", "123", 2250);
+
+        await novo_user(cont, "noob", "noob@sudoku", "12344", 2256);
+        await novo_user(cont, "pro", "pro@sudoku", "12344", 2256);
+        await novo_user(cont, "hacker", "hacker@sudoku", "12344", 7321);
+        await novo_user(cont, "god", "god@sudoku", "12344", 2256);
+        await novo_user(cont, "creator", "creator@sudoku", "12344", 2256);
+
+        await novo_user(cont, "ondra", "silence@flatanger.no", "12344", 8500);
+        await novo_user(cont, "jakob", "leadvictory@innsbruck.at", "12344", 8490);
+        await novo_user(cont, "magmidt", "magjuice@no", "12344", 8590);
+
+        Environment.Exit(0);
+    }
+
+
+
 
 
     static async Task Main(string[] args)
@@ -287,7 +363,7 @@ public class Program
         }
 
         if (args.Length > 0 && args[0] == "teste") await testar(cont);
-
+        if (args.Length > 0 && args[0] == "pop") await popular(cont);
         
 
         var builder = WebApplication.CreateBuilder(args);
@@ -296,33 +372,25 @@ public class Program
 
 
 
+        app.MapPut("/fimpartida", async (fim_partida fp) =>
+        {
+            await trocar_user_elo(cont, fp.ganhador, fp.elo_diff_ganhador);
+            await trocar_user_elo(cont, fp.perdedor, fp.elo_diff_perdedor);
+            await nova_partida(cont, fp.ganhador, fp.perdedor, fp.tabuleiros);
 
-        app.MapPut("/trocardados/", async (change_user_info upi) => {
-            var user = cont.usuarios.FirstOrDefault(u => u.email == upi.email);
-
-
-            if (user != null){
-                if (upi.nome != null && upi.nome != "") user.nome = upi.nome;
-                if (upi.foto != null && upi.foto != "") user.foto_link = upi.foto;
-                if (upi.senha != null && upi.senha != "") {
-                    using var hmac = new HMACSHA512();
-                    byte[] senhaSalt = hmac.Key;
-                    byte[] senhaHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(upi.senha));
-                    user.senha_hash = senhaHash;
-                    user.senha_salt = senhaSalt;
-
-
-                }
-                cont.SaveChanges();
-
-                return Results.Ok("alterado");
-            }
-
-            return Results.Unauthorized();
+            return Results.Ok("ok!");
         });
 
 
 
+
+        app.MapPut("/trocardados/", async (change_user_info cui) => {
+            bool r = await trocar_user_dados(cont, cui);
+
+            if (r) return Results.Ok("trocado");
+
+            return Results.Unauthorized();
+        });
 
         app.MapGet("/stats/{nome}", async (string nome) =>
         {
@@ -369,6 +437,14 @@ public class Program
 
             return Results.Ok(new user_private_info(analise.nome, analise.email, _senhaHash, _senhaSalt));
         });
+
+        app.MapGet("/existe/{nome}", async (string nome) =>
+        {
+            Usuario? analise = await find_user(cont, nome);
+            
+            if (analise == null) return Results.Ok(0);
+            return Results.Ok(1);
+        });
         
         app.MapPost("/cadastrar", async (Cadastro cadastro) =>
         {
@@ -391,13 +467,13 @@ public class Program
 
         app.MapGet("/leaderboard", async () =>
         {
-            (string nome, int elo)[]? res = await leaderboard(cont);
+            (string nome, int elo, string foto)[]? res = await leaderboard(cont);
             if (res == null)
             {
                 return Results.NoContent();
             }
  
-            return Results.Ok(res.Select(u => new {u.nome, u.elo}));
+            return Results.Ok(res.Select(u => new {u.nome, u.elo, u.foto}));
         });
         app.Run();
     }
