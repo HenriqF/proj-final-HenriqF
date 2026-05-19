@@ -186,15 +186,17 @@ app.MapPost("/cadastro", async (Cadastro data) =>
 
 
 app.MapPost("/mudarinfo", async (HttpContext cont, change_user_info data) => {
-    string header = cont.Request.Headers["Authorization"];
+    string? header = cont.Request.Headers["Authorization"];
+    if (header == null) return Results.Unauthorized();
+
     string jwt = header.Substring(7);
 
     SecurityToken? t = VerificarToken(jwt);
     if (t == null) return Results.Unauthorized();
 
     var handler = new JwtSecurityTokenHandler();
-    var ts = handler.ReadJwtToken(jwt);
-    string email_jwt = ts.Claims.FirstOrDefault(c => c.Type == "Email")?.Value;
+    JwtSecurityToken ts = handler.ReadJwtToken(jwt);
+    string? email_jwt = ts.Claims.FirstOrDefault(c => c.Type == "Email")?.Value;
     
     if (email_jwt != data.email) return Results.Unauthorized();
 
@@ -227,8 +229,6 @@ app.MapGet("/leaderboard", async () =>
 
 app.MapGet("/stats/{nome}", async (string nome) => {
     var client = new HttpClient();
-
-
     var response = await client.GetAsync($"http://localhost:5127/stats/{nome}");
 
     if (! response.IsSuccessStatusCode)
@@ -248,7 +248,12 @@ app.MapGet("/stats/{nome}", async (string nome) => {
 
 
 
-
+app.MapGet("/existe/{nome}", async (string nome) =>
+{
+    var client = new HttpClient();
+    var response = await client.GetFromJsonAsync<int>($"http://localhost:5127/existe/{nome}");
+    return Results.Ok(response);
+});
 
 app.MapGet("/jwtvalido/{tok}", (string tok) => {
     SecurityToken? t = VerificarToken(tok);
@@ -261,8 +266,11 @@ ConcurrentDictionary<string, (DateTime, string)> solicitacoes = new();
 ConcurrentDictionary<string, string> solicitando = new();
 
 app.MapGet("/jogartoken/{nome}", (HttpContext cont, string nome) =>
-{
-    string header = cont.Request.Headers["Authorization"];
+{   
+    string? header = cont.Request.Headers["Authorization"];
+    if (header == null) return Results.Unauthorized();
+
+
     string jwt = header.Substring(7);
 
     SecurityToken? t = VerificarToken(jwt);
@@ -270,7 +278,7 @@ app.MapGet("/jogartoken/{nome}", (HttpContext cont, string nome) =>
 
     var handler = new JwtSecurityTokenHandler();
     var ts = handler.ReadJwtToken(jwt);
-    string nome_jwt = ts.Claims.FirstOrDefault(c => c.Type == "Username")?.Value;
+    string? nome_jwt = ts.Claims.FirstOrDefault(c => c.Type == "Username")?.Value;
     
     if (nome_jwt != nome) return Results.Unauthorized();
 

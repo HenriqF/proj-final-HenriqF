@@ -271,6 +271,36 @@ public class Program
     }
 
 
+    static async Task popular(AppDbContext cont)
+    {
+        await novo_user(cont, "patrick", "pátrique@mail", "12344", 900);
+        await novo_user(cont, "almeida", "aalmida@mail", "12344", 950);
+
+        await novo_user(cont, "brick", "mailmailmail", "12344", 1000);
+        await novo_user(cont, "dewey", "godisdead@com", "12344", 1050);
+
+        await novo_user(cont, "roberto", "bert@hudson", "12344", 5500);
+        await novo_user(cont, "hudson", "maxmilneclimb@hudson", "12344", 5600);
+
+        await novo_user(cont, "daniel", "janjagarnbret@hudson", "12344", 2200);
+        await novo_user(cont, "joao", "aimori@hudson", "12344", 2256);
+
+        await novo_user(cont, "batman", "batman@notbruce.com", "123", 2256);
+        await novo_user(cont, "jokler", "ysosirius@yahoo.com", "123", 2250);
+
+        await novo_user(cont, "noob", "noob@sudoku", "12344", 2256);
+        await novo_user(cont, "pro", "pro@sudoku", "12344", 2256);
+        await novo_user(cont, "hacker", "hacker@sudoku", "12344", 7321);
+        await novo_user(cont, "god", "god@sudoku", "12344", 2256);
+        await novo_user(cont, "creator", "creator@sudoku", "12344", 2256);
+
+        await novo_user(cont, "ondra", "silence@flatanger.no", "12344", 8500);
+        await novo_user(cont, "jakob", "leadvictory@innsbruck.at", "12344", 8490);
+        await novo_user(cont, "magmidt", "magjuice@no", "12344", 8590);
+
+        Environment.Exit(0);
+    }
+
     static async Task Main(string[] args)
     {
         Console.WriteLine("==============");
@@ -287,7 +317,7 @@ public class Program
         }
 
         if (args.Length > 0 && args[0] == "teste") await testar(cont);
-
+        if (args.Length > 0 && args[0] == "pop") await popular(cont);
         
 
         var builder = WebApplication.CreateBuilder(args);
@@ -302,7 +332,11 @@ public class Program
 
 
             if (user != null){
-                if (upi.nome != null && upi.nome != "") user.nome = upi.nome;
+                if (upi.nome != null && upi.nome != "")
+                {
+                    Usuario? procura = await find_user(cont, upi.nome);
+                    if (procura == null) user.nome = upi.nome;
+                } 
                 if (upi.foto != null && upi.foto != "") user.foto_link = upi.foto;
                 if (upi.senha != null && upi.senha != "") {
                     using var hmac = new HMACSHA512();
@@ -368,6 +402,14 @@ public class Program
 
 
             return Results.Ok(new user_private_info(analise.nome, analise.email, _senhaHash, _senhaSalt));
+        });
+
+        app.MapGet("/existe/{nome}", async (string nome) =>
+        {
+            Usuario? analise = await find_user(cont, nome);
+            
+            if (analise == null) return Results.Ok(0);
+            return Results.Ok(1);
         });
         
         app.MapPost("/cadastrar", async (Cadastro cadastro) =>

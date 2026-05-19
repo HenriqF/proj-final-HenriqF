@@ -21,13 +21,14 @@ namespace Sockets.WebSocketServer;
 public class WebSocketServer
 {
     //variaveis    
-    private static ConcurrentDictionary<string, WebSocket> _clients_sockets = new();
+    private static ConcurrentDictionary<string, WebSocket> _clients_sockets = new(); //playre weebsocket
+    private static ConcurrentDictionary<string, user_stats> _clients_stats = new(); //player stats ()
 
     private static int _elo_prestiege_size = 200;
-    private static ConcurrentDictionary<int, string> _queued_clients = new();  
+    private static ConcurrentDictionary<int, string> _queued_clients = new();  //leo bucket, playre
 
     private static ConcurrentDictionary<string, string[]> _playing_clients = new();  //player, sudoku_board
-    private static ConcurrentDictionary<string, string> _playing_opponent = new();
+    private static ConcurrentDictionary<string, string> _playing_opponent = new(); //player opp
 
     //-------
 
@@ -64,26 +65,8 @@ public class WebSocketServer
 
     private static async void FindMatch(string player_name, string id, WebSocket webSocket)
     {
-        var client = new HttpClient();
-
-        var get_stats_response = await client.GetAsync($"http://localhost:5127/stats/{player_name}");
-
-        if (! get_stats_response.IsSuccessStatusCode)
-        {
-            await MessageClientAsync("player nao existe...?" , webSocket);
-            return;
-        }
-
-        var stats = await client.GetFromJsonAsync<user_stats>(
-            $"http://localhost:5127/stats/{player_name}"
-        );
-        if (stats == null)
-        {
-            await MessageClientAsync("player sem estatisticas...?" , webSocket);
-            return;
-        }
-
-        int elo_bucket = stats.elo/_elo_prestiege_size;
+        
+        int elo_bucket = _clients_stats[player_name].elo/_elo_prestiege_size;
         if (_queued_clients.ContainsKey(elo_bucket))
         {
             if (_queued_clients[elo_bucket] == id)
@@ -94,6 +77,7 @@ public class WebSocketServer
 
             if (_queued_clients.TryRemove(elo_bucket, out string? opp_id))
             {
+                var client = new HttpClient();
                 new_sudokus? sudoku = await client.GetFromJsonAsync<new_sudokus>(
                     "http://localhost:5121/new"
                 );
@@ -111,8 +95,8 @@ public class WebSocketServer
                 _playing_opponent.TryAdd(id, opp_id);
                 _playing_opponent.TryAdd(opp_id, id);
 
-                await MessageClientAsync("sudoku:" + sudoku.boards[0], webSocket);
-                await MessageClientAsync("sudoku:" + sudoku.boards[0], _clients_sockets[opp_id]);
+                await MessageClientAsync("sudoku:" + sudoku.boards[1], webSocket);
+                await MessageClientAsync("sudoku:" + sudoku.boards[1], _clients_sockets[opp_id]);
 
                 Console.WriteLine(sudoku.boards[0]);
                 Console.WriteLine(sudoku.boards[1]);
@@ -207,6 +191,11 @@ public class WebSocketServer
 
 
         var builder = WebApplication.CreateBuilder(args);
+        builder.Services.Configure<HostOptions>(opts =>
+        {
+            opts.ShutdownTimeout = TimeSpan.FromSeconds(1);
+        });
+
         var app = builder.Build();
         app.UseWebSockets();
 
@@ -217,7 +206,6 @@ public class WebSocketServer
             string? token = context.Request.RouteValues["token"]?.ToString();
             if (token == null) return;
 
-
             var client = new HttpClient();
             var response = await client.GetAsync($"http://localhost:5269/confirmar/{token}");
 
@@ -227,19 +215,36 @@ public class WebSocketServer
 
             using var web_socket = await context.WebSockets.AcceptWebSocketAsync();
             string client_id = usuario;
+            
 
-            if (_clients_sockets.ContainsKey(client_id))return;
+
+
+            var get_stats_response = await client.GetAsync($"http://localhost:5127/stats/{client_id}");
+
+            if (! get_stats_response.IsSuccessStatusCode)return;
+
+            user_stats? stats = await client.GetFromJsonAsync<user_stats>($"http://localhost:5127/stats/{client_id}");
+            if (stats == null)return;
+
+
+
+            if (_clients_sockets.ContainsKey(client_id)){
+                Console.WriteLine($"CONECXAO RECUSADA POR JA TA JOGANDO: {client_id}");
+                return;
+            }
+
 
             if (_playing_clients.TryGetValue(client_id, out var boards))
             {   
-                Console.WriteLine("PORRALOCA");
-                await MessageClientAsync("sudoku:" + boards[0], web_socket);
+                Console.WriteLine($"CLIENTE JGOANDO VOLTOU MEU DEUS É CALASEWING! {client_id}");
+                await MessageClientAsync("sudoku:" + boards[1], web_socket);
             }
 
 
             try
             {
                 _clients_sockets.TryAdd(client_id, web_socket);
+                _clients_stats.TryAdd(client_id, stats);
 
                 Console.WriteLine($"novo cliente: {client_id}");
                 await MessageClientAsync($"voce é {client_id}", web_socket);
@@ -251,6 +256,12 @@ public class WebSocketServer
             }
             finally
             {
+                if (!_playing_clients.ContainsKey(client_id))
+                {
+                    
+                }
+
+                _clients_stats.TryRemove(client_id, out _);
                 _clients_sockets.TryRemove(client_id, out _);
                 Console.WriteLine($"saiu: {client_id}");
             }
