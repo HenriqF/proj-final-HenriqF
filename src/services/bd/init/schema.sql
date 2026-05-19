@@ -34,6 +34,8 @@ CREATE TABLE IF NOT EXISTS partidas (
     user_ganhador_elo INT,
     user_derrotado_elo INT,
 
+    duracao_ms INT,
+
     tabuleiros VARCHAR(255),
 
     FOREIGN KEY (user_ganhador) REFERENCES usuarios(id),
