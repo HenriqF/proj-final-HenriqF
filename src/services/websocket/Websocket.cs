@@ -207,19 +207,20 @@ public class WebSocketServer
 
         var builder = WebApplication.CreateBuilder(args);
         var app = builder.Build();
-        //app.UseHttpsRedirection();
         app.UseWebSockets();
 
-        app.Map("/ws", async context =>
+        app.Map("/ws/{token}", async context =>
         {
-            if (!context.WebSockets.IsWebSocketRequest)
-            {
-                context.Response.StatusCode = StatusCodes.Status400BadRequest;
-                return;
-            }
+            if (!context.WebSockets.IsWebSocketRequest) return;
+
+            string? nome = context.Request.RouteValues["nome"]?.ToString();
+            if (nome == null) return;
 
             using var web_socket = await context.WebSockets.AcceptWebSocketAsync();
-            string client_id = Guid.NewGuid().ToString();
+            string client_id = nome;
+
+            if (_clients_sockets.ContainsKey(client_id))return;
+
 
             try
             {
