@@ -48,6 +48,8 @@ public class Partida
     public int user_ganhador_elo {get; set;}
     public int user_derrotado_elo {get; set;}
 
+    public int duracao_ms {get; set;}
+
     public string? tabuleiros {get;set;}
 
     public Usuario? UserGanhador { get; set; }
@@ -174,6 +176,21 @@ public class Program
         return true;
     }
 
+    static async Task<bool> updt_user_melhor_tempo(AppDbContext cont, string nome, int tempo)
+    {
+        Usuario? user = await cont.usuarios.Include(u => u.Stats).FirstOrDefaultAsync(u => u.nome == nome);
+        if (user == null) return false;
+        
+        if (user.Stats!.melhor_tempo < tempo)
+        {
+            user.Stats!.melhor_tempo = tempo;
+            cont.SaveChanges();
+        }
+
+        
+        return true;
+    }
+
     static async Task<bool> trocar_user_dados(AppDbContext cont, change_user_info cui)
     {
         Usuario? user = await cont.usuarios.FirstOrDefaultAsync(u => u.email == cui.email);
@@ -220,7 +237,7 @@ public class Program
         return user;
     }
 
-    static async Task<bool> nova_partida(AppDbContext cont, string ganhador, string derrotado, string tabuleiros)
+    static async Task<bool> nova_partida(AppDbContext cont, string ganhador, string derrotado, string tabuleiros, int duracao)
     {
         try
         {
@@ -231,12 +248,17 @@ public class Program
                 return false;
             }
 
+            u_ganhador.Stats!.qtd_jogos_ganhos += 1;
+            u_ganhador.Stats!.qtd_jogos_jogados += 1;
+            u_derrotado.Stats!.qtd_jogos_jogados += 1;
+
             Partida nova = new Partida
             {
                 user_ganhador = u_ganhador.id,
                 user_derrotado = u_derrotado.id,
                 user_ganhador_elo = u_ganhador.Stats!.user_elo,
                 user_derrotado_elo = u_derrotado.Stats!.user_elo,
+                duracao_ms = duracao,
                 tabuleiros = tabuleiros
             };
 
@@ -295,7 +317,7 @@ public class Program
         if (!await novo_user(cont, "pedro_sigma", "wow.com@hudson", "12344", 1200)) goto deu_ruim;
         Console.WriteLine("pedro_sigma criado");
 
-        if (!await nova_partida(cont, "pedro", "pedro_sigma", "abc")) goto deu_ruim;
+        if (!await nova_partida(cont, "pedro", "pedro_sigma", "abc", 50000)) goto deu_ruim;
         Console.WriteLine($"Criada partida entre pedro e pedro_sigma");
 
 
@@ -374,9 +396,10 @@ public class Program
 
         app.MapPut("/fimpartida", async (fim_partida fp) =>
         {
+            await updt_user_melhor_tempo(cont, fp.ganhador, fp.duracao_ms);
             await trocar_user_elo(cont, fp.ganhador, fp.elo_diff_ganhador);
             await trocar_user_elo(cont, fp.perdedor, fp.elo_diff_perdedor);
-            await nova_partida(cont, fp.ganhador, fp.perdedor, fp.tabuleiros);
+            await nova_partida(cont, fp.ganhador, fp.perdedor, fp.tabuleiros, fp.duracao_ms);
 
             return Results.Ok("ok!");
         });
