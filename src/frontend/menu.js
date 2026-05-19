@@ -9,15 +9,26 @@ const infoDefeats = document.getElementById("defeats");
 var nome_user;
 var jwt_token;
 
-var host = "localhost";
-
-
-if(localStorage.getItem("user")!==null){
+if(localStorage.getItem("token")!==null && tokenValido()){
     nome_user = localStorage.getItem("user");
     infoNome.textContent = localStorage.getItem("user");
     jwt_token = localStorage.getItem("token");
     
 }else document.getElementById("login").click();
+
+async function tokenValido() {
+    try{
+        const response = await fetch(`https://${host}:7185/jwtvalido/${localStorage.getItem("token")}`);
+
+        const data = await response.json();
+
+        if (data==1)return true;
+
+        return false;
+    } catch(error){
+        return false;
+    }
+}
 
 function sair(){
     localStorage.clear()
@@ -29,7 +40,7 @@ async function leader() {
         const table = document.getElementById("table");
         const newRow = table.insertRow();
 
-        const response = await fetch('https://localhost:7185/leaderboard');
+        const response = await fetch(`https://${host}:7185/leaderboard`);
 
         const data = await response.json();
 
@@ -61,7 +72,7 @@ async function Carregardados(){
     try {
         let nome = localStorage.getItem("user")
 
-        const response = await fetch(`https://localhost:7185/stats/${nome}`);
+        const response = await fetch(`https://${host}:7185/stats/${nome}`);
 
         const data = await response.json();
 
@@ -92,5 +103,9 @@ async function jogar(){
         document.getElementById("jogo").click();
     }
 }
+
+function mudarDados(){
+    document.getElementById("mudar_info").click();
+};
 
 leader()
