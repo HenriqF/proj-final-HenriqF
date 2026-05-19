@@ -213,11 +213,19 @@ public class WebSocketServer
         {
             if (!context.WebSockets.IsWebSocketRequest) return;
 
-            string? nome = context.Request.RouteValues["nome"]?.ToString();
-            if (nome == null) return;
+            string? token = context.Request.RouteValues["token"]?.ToString();
+            if (token == null) return;
+
+
+            var client = new HttpClient();
+            var response = await client.GetAsync($"http://localhost:5269/confirmar/{token}");
+
+            if (response.StatusCode == HttpStatusCode.Unauthorized) return;
+            string usuario = await response.Content.ReadAsStringAsync();
+
 
             using var web_socket = await context.WebSockets.AcceptWebSocketAsync();
-            string client_id = nome;
+            string client_id = usuario;
 
             if (_clients_sockets.ContainsKey(client_id))return;
 
