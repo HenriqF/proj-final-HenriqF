@@ -37,5 +37,18 @@ public record user_private_info (
 
 public record player_elo_rel (
     string nome,
-    int elo
+    int elo,
+    string foto
+);
+
+
+public record fim_partida (
+    string ganhador,
+    string perdedor,
+    string tabuleiros,
+
+    int elo_diff_ganhador,
+    int elo_diff_perdedor,
+
+    int duracao_ms
 );
