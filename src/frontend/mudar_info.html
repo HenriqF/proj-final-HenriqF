@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mudar Informações do Perfil</title>
+    <link rel="stylesheet" href="css/mudar_info.css">
+</head>
+<body>
+    <div class="section">
+        <div id="perfil">
+            <div id="perfil-top">
+                <img src="https://i.pinimg.com/736x/2d/0f/54/2d0f54b3cae58511c4d47b464d445f1c.jpg" id="foto">
+                <div id="perfil-info">
+                    <p id="nome">Marcelo</p>
+                    <p id="email">marcelo@gmail.com</p>                     
+                </div>
+            </div>
+        </div>
+        <br>
+        <div id="dados">
+            <h2>Mudar Dados</h2>
+            <input type="text" id="username" placeholder="Nome">
+            <input type="text" id="email" placeholder="E-mail">
+            <input type="password" id="password" placeholder="Nova senha">
+            <input type="password" id="password2" placeholder="Confirmar nova senha">
+            <input type="password" id="password3" placeholder="Confirmar nova senha">
+            <p onmousedown="mostrar_senha()" onmouseup="esconder_senha()" id="curto">Mostrar senha</p>
+            <button onclick="fazerSignup()">Cadastrar</button>
+            <div id="message"></div>
+            <p onclick="trocar()">Já possui conta?</p>
+    </div>
+</body>
+</html>

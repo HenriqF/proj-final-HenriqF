@@ -12,6 +12,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text.Unicode;
 using Microsoft.AspNetCore.Http.HttpResults;
 using System.Net; /* eu MARCELO botei isso */
+using Microsoft.Extensions.Primitives;
 
 using System.Text;
 using System.Collections.Concurrent;
@@ -24,30 +25,53 @@ Console.WriteLine("===================");
 
 
 
+var silencio = "abobrinhacomemolesesoltabbvemdancarcomigochatovelhocomibostaontemnaomintofalosoverdades"; //tbm esta no appsettings
 string CriarToken(string nome, string email)
+{
+    List<Claim> clains = new List<Claim>()
     {
-        List<Claim> clains = new List<Claim>()
-        {
         new Claim("Email", email),
         new Claim("Username", nome)
-        };
+    };
 
-        var silencio = "abobrinhacomemolesesoltabbvemdancarcomigochatovelhocomibostaontemnaomintofalosoverdades"; //tbm esta no appsettings
+    var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(silencio));
 
-        var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(silencio));
+    var cred = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
 
-        var cred = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
-
-        var token = new JwtSecurityToken(
+    var token = new JwtSecurityToken(
         claims: clains,
         expires: DateTime.Now.AddDays(1),
         signingCredentials: cred
-        );
+    );
 
-        var jwt = new JwtSecurityTokenHandler().WriteToken(token);
+    var jwt = new JwtSecurityTokenHandler().WriteToken(token);
 
-        return jwt;
+    return jwt;
+}
+
+SecurityToken? VerificarToken(string token)
+{
+    var th = new JwtSecurityTokenHandler();
+    var vp = new TokenValidationParameters {
+        ValidateLifetime = true,
+        ValidateAudience = false,
+        ValidateIssuer = false,
+        ValidIssuer = ".",
+        ValidAudience = ".",
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(silencio))
+    };
+
+    try
+    {
+        th.ValidateToken(token, vp, out SecurityToken vt);
+        return vt;
     }
+    catch
+    {
+        return null;
+    }
+
+}
 
 
 async Task<bool> Cadastrar(Cadastro dados)
@@ -77,6 +101,8 @@ CLIENTE -> WEBSOCKET (eu posso entrar : 123)
 WEBSOCKET -> INTERFACE (ele pode entrar? 123)
 */
 
+/*MUDAR SENHA, NOME, FOTO*/
+
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
@@ -94,25 +120,6 @@ app.UseCors("AllowAll"); //marcelo aqui
 app.UseSwagger();
 app.UseSwaggerUI();
 app.UseHttpsRedirection();
-
-
-app.MapGet("/leaderboard", async () =>
-{
-    var client = new HttpClient();
-
-    var response = await client.GetAsync("http://localhost:5127/leaderboard");
-
-    if (response.StatusCode == HttpStatusCode.NoContent || ! response.IsSuccessStatusCode)
-    {
-        return Results.NoContent();
-    }
-
-    var dados = await client.GetFromJsonAsync<List<player_elo_rel>>("http://localhost:5127/leaderboard");
-
-    var formatado = dados!.Select(u => new object[] {u.nome, u.elo}).ToList();
-
-    return Results.Ok(formatado);
-});
 
 
 app.MapPost("/login", async (Login data) =>
@@ -155,7 +162,6 @@ app.MapPost("/login", async (Login data) =>
 
 }).WithName("Login");
 
-
 app.MapPost("/cadastro", async (Cadastro data) =>
 {
     try
@@ -179,6 +185,46 @@ app.MapPost("/cadastro", async (Cadastro data) =>
 }).WithName("Cadastro");
 
 
+app.MapPost("/mudarinfo", async (HttpContext cont, change_user_info data) => {
+    string header = cont.Request.Headers["Authorization"];
+    string jwt = header.Substring(7);
+
+    SecurityToken? t = VerificarToken(jwt);
+    if (t == null) return Results.Unauthorized();
+
+    var handler = new JwtSecurityTokenHandler();
+    var ts = handler.ReadJwtToken(jwt);
+    string email_jwt = ts.Claims.FirstOrDefault(c => c.Type == "Email")?.Value;
+    
+    if (email_jwt != data.email) return Results.Unauthorized();
+
+    var client = new HttpClient();  
+    var i = await client.PutAsJsonAsync($"http://localhost:5127/trocardados", data);
+
+    return Results.Ok("trocado");
+});
+
+
+
+
+app.MapGet("/leaderboard", async () =>
+{
+    var client = new HttpClient();
+
+    var response = await client.GetAsync("http://localhost:5127/leaderboard");
+
+    if (response.StatusCode == HttpStatusCode.NoContent || ! response.IsSuccessStatusCode)
+    {
+        return Results.NoContent();
+    }
+
+    var dados = await client.GetFromJsonAsync<List<player_elo_rel>>("http://localhost:5127/leaderboard");
+
+    var formatado = dados!.Select(u => new object[] {u.nome, u.elo}).ToList();
+
+    return Results.Ok(formatado);
+});
+
 app.MapGet("/stats/{nome}", async (string nome) => {
     var client = new HttpClient();
 
@@ -199,12 +245,35 @@ app.MapGet("/stats/{nome}", async (string nome) => {
 }).WithName("GetUserStats");
 
 
+
+
+
+
+
+app.MapGet("/jwtvalido/{tok}", (string tok) => {
+    SecurityToken? t = VerificarToken(tok);
+    if (t == null) return Results.Ok(0);
+    return Results.Ok(1);
+});
+
+
 ConcurrentDictionary<string, (DateTime, string)> solicitacoes = new();
 ConcurrentDictionary<string, string> solicitando = new();
 
-
-app.MapGet("/jogartoken/{nome}", (string nome) =>
+app.MapGet("/jogartoken/{nome}", (HttpContext cont, string nome) =>
 {
+    string header = cont.Request.Headers["Authorization"];
+    string jwt = header.Substring(7);
+
+    SecurityToken? t = VerificarToken(jwt);
+    if (t == null) return Results.Unauthorized();
+
+    var handler = new JwtSecurityTokenHandler();
+    var ts = handler.ReadJwtToken(jwt);
+    string nome_jwt = ts.Claims.FirstOrDefault(c => c.Type == "Username")?.Value;
+    
+    if (nome_jwt != nome) return Results.Unauthorized();
+
     if (solicitando.ContainsKey(nome))
     {
         if (solicitacoes.TryGetValue(solicitando[nome], out (DateTime, string) info))
@@ -223,12 +292,12 @@ app.MapGet("/jogartoken/{nome}", (string nome) =>
         return Results.StatusCode(503);
     }
 
-    string token = Guid.NewGuid().ToString("N");
+    string a_token = Guid.NewGuid().ToString("N");
 
-    solicitacoes.TryAdd(token, (DateTime.Now.AddSeconds(10), nome));
-    solicitando.TryAdd(nome, token);
+    solicitacoes.TryAdd(a_token, (DateTime.Now.AddSeconds(10), nome));
+    solicitando.TryAdd(nome, a_token);
 
-    return Results.Ok(token);
+    return Results.Ok(a_token);
 });
 
 app.MapGet("/confirmar/{token}", (string token) =>
@@ -250,6 +319,10 @@ app.MapGet("/confirmar/{token}", (string token) =>
     }
 
 });
+
+
+
+
 
 app.Run();
 

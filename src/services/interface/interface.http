@@ -4,3 +4,33 @@ GET {{interface_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###
+
+GET https://localhost:7185/jogartoken/pedro
+Authorization: Bearer eyJhbGciOiJodHRwOi8vd3d3LnczLm9yZy8yMDAxLzA0L3htbGRzaWctbW9yZSNobWFjLXNoYTUxMiIsInR5cCI6IkpXVCJ9.eyJFbWFpbCI6InNpZ21hIiwiVXNlcm5hbWUiOiJwZWRybyIsImV4cCI6MTc3OTI3NzU2OX0.RNVf2Hf5_l4om6U0NJ4l1__uscxAUlGes_bG7TMaYtx3PwhuY_lQBlz0slBxShTIFTWcxVYe4aocOQ0iJ988BQ
+
+
+
+
+###
+
+GET https://localhost:7185/jwtvalido/f
+
+###
+
+POST https://localhost:7185/mudarinfo
+Authorization: Bearer eyJhbGciOiJodHRwOi8vd3d3LnczLm9yZy8yMDAxLzA0L3htbGRzaWctbW9yZSNobWFjLXNoYTUxMiIsInR5cCI6IkpXVCJ9.eyJFbWFpbCI6Indvdy5jb20iLCJVc2VybmFtZSI6InBlZHJvIiwiZXhwIjoxNzc5Mjg0Mzc0fQ.MmUgXvuMigKbY4kvVxrBlzGDAP1eaHB2trnaCbWSOQpYPuTW9nJc3VMDJhnhSoQ0oq2sk-YszpHQwZgYjSNnYg
+Content-Type: application/json
+
+{
+  "email" : "wow.com",
+  "nome": "pedro",
+  "foto" : "https://i.pinimg.com/736x/0b/6c/44/0b6c44a2bb3e369362c57911c66fbcc9.jpg",
+  "senha" : "PORRA"
+}
+
+
+//quando o cara mudar os dados, gera um novo JWT, como no LOGIN 
+//entao nem precisa do endpoint pra verificar senha kkkkk
+
+
+//acho que tem 

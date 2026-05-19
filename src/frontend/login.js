@@ -29,7 +29,9 @@ async function fazerLogin(){
 
         const data = await response.json();
 
-        mensagem.innerText = data;
+        localStorage.setItem("token", data);
+        localStorage.setItem("user", userLogin.value);
+        document.getElementById("menu").click();
 
     } catch (error) {
         mensagem.innerText = "Erro ao conectar com o servidor.";

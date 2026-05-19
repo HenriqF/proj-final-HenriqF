@@ -1,10 +1,8 @@
-const conectar_botao = document.getElementById("conectar");
-const nome = 
 
 
-conectar_botao.addEventListener("click", e => {
+if(localStorage.getItem("tok")!==null){
 
-    const sock = new WebSocket(`ws://127.0.0.1:5015/ws/${document.getElementById("input-nome").value}`); 
+    const sock = new WebSocket(`ws://127.0.0.1:5015/ws/${localStorage.getItem("tok")}`); 
 
     sock.onopen = () => {
         input.value = "jogar"
@@ -64,5 +62,4 @@ conectar_botao.addEventListener("click", e => {
         }
         sock.send(out)
     }
-});
-
+}

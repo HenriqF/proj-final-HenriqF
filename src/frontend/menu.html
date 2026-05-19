@@ -15,7 +15,7 @@
                     <div id="perfil-info">
                         <p id="nome">Marcelo</p>
                         <p id="email">marcelo@gmail.com</p>
-                        
+                        <p id="mudar" onclick="mudarDados()">Mudar dados</p>                        
                     </div>
                 </div>
                 <div id="perfil-bottom">
@@ -23,15 +23,14 @@
                     <p class="mais" id="elo">Elo: 1700</p>
                     <p class="mais" id="wins">Wins: 17</p>
                     <p class="mais" id="defeats">Defeats: 1</p>
-                    <p id="mudar">Mudar dados</p>
                 </div>
             </div>
             <br>
             <br>
             <br>
-            <button onclick="leader()">JOGAR</button>
+            <button onclick="jogar()">JOGAR</button>
             <br>
-            <button>SAIR</button>
+            <button onclick="sair()">SAIR</button>
         </div>
 
         <div class="section">
@@ -53,7 +52,9 @@
             </div>
         </div>
 
-    </div>]
+    </div>
+    <a id="login" href="login.html"></a>
+    <a id="jogo" href="game.html"></a>
     <script src="menu.js"></script>
 </body>
 </html>
