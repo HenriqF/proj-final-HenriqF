@@ -37,5 +37,6 @@ public record user_private_info (
 
 public record player_elo_rel (
     string nome,
-    int elo
+    int elo,
+    string foto
 );

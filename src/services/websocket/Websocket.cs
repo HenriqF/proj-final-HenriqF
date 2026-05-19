@@ -150,7 +150,9 @@ public class WebSocketServer
             {
                 if (message == _playing_clients[id][1])
                 {
-                    await MessageClientAsync("perdeu:" , _clients_sockets[_playing_opponent[id]]);
+                    _clients_sockets.TryGetValue(_playing_opponent[id], out WebSocket? v);
+                    if (v != null) await MessageClientAsync("perdeu:" , v);
+                    
                     await MessageClientAsync("ganhou:" , webSocket);
 
                     RemovePlayingClient(_playing_opponent[id]);
@@ -250,15 +252,16 @@ public class WebSocketServer
                 await MessageClientAsync($"voce é {client_id}", web_socket);
                 await HandleClientAsync(client_id, web_socket);
             }
-            catch 
+            catch (Exception e) 
             {
-                Console.WriteLine($"erro fatal: {client_id}");
+                Console.WriteLine($"erro fatal: {client_id} -> {e}");
             }
             finally
             {
                 if (!_playing_clients.ContainsKey(client_id))
                 {
-                    
+                    int elo_bucket = _clients_stats[client_id].elo/_elo_prestiege_size;
+                    _queued_clients.TryRemove(elo_bucket, out _);
                 }
 
                 _clients_stats.TryRemove(client_id, out _);

@@ -222,7 +222,7 @@ app.MapGet("/leaderboard", async () =>
 
     var dados = await client.GetFromJsonAsync<List<player_elo_rel>>("http://localhost:5127/leaderboard");
 
-    var formatado = dados!.Select(u => new object[] {u.nome, u.elo}).ToList();
+    var formatado = dados!.Select(u => new object[] {u.nome, u.elo, u.foto}).ToList();
 
     return Results.Ok(formatado);
 });
@@ -254,6 +254,9 @@ app.MapGet("/existe/{nome}", async (string nome) =>
     var response = await client.GetFromJsonAsync<int>($"http://localhost:5127/existe/{nome}");
     return Results.Ok(response);
 });
+
+
+
 
 app.MapGet("/jwtvalido/{tok}", (string tok) => {
     SecurityToken? t = VerificarToken(tok);

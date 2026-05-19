@@ -103,14 +103,14 @@ public class AppDbContext : DbContext
 public class Program
 {
 
-    static async Task<(string nome, int elo)[]?> leaderboard(AppDbContext cont)
+    static async Task<(string nome, int elo, string foto)[]?> leaderboard(AppDbContext cont)
     {
         try
         {
-            (string, int)[]? tp = await cont.usuarios.Join(cont.sudoku_stats, u => u.id, s => s.user_id, (u, s) => new { u.nome, s.user_elo })
+            (string, int, string)[]? tp = await cont.usuarios.Join(cont.sudoku_stats, u => u.id, s => s.user_id, (u, s) => new { u.nome, s.user_elo, u.foto_link })
                                         .OrderByDescending(i => i.user_elo)
                                         .Take(100)
-                                        .Select(i => ValueTuple.Create(i.nome!, i.user_elo))
+                                        .Select(i => ValueTuple.Create(i.nome!, i.user_elo, i.foto_link!))
                                         .ToArrayAsync();
 
             
@@ -433,13 +433,13 @@ public class Program
 
         app.MapGet("/leaderboard", async () =>
         {
-            (string nome, int elo)[]? res = await leaderboard(cont);
+            (string nome, int elo, string foto)[]? res = await leaderboard(cont);
             if (res == null)
             {
                 return Results.NoContent();
             }
  
-            return Results.Ok(res.Select(u => new {u.nome, u.elo}));
+            return Results.Ok(res.Select(u => new {u.nome, u.elo, u.foto}));
         });
         app.Run();
     }
