@@ -40,3 +40,13 @@ public record player_elo_rel (
     int elo,
     string foto
 );
+
+
+public record fim_partida (
+    string ganhador,
+    string perdedor,
+    string tabuleiros,
+
+    int elo_diff_ganhador,
+    int elo_diff_perdedor
+);

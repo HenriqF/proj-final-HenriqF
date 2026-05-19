@@ -44,6 +44,10 @@ public class Partida
     public int id {get; set;}
     public int user_ganhador {get; set;}
     public int user_derrotado {get; set;}
+
+    public int user_ganhador_elo {get; set;}
+    public int user_derrotado_elo {get; set;}
+
     public string? tabuleiros {get;set;}
 
     public Usuario? UserGanhador { get; set; }
@@ -158,6 +162,44 @@ public class Program
         return true;
     }
 
+
+    static async Task<bool> trocar_user_elo(AppDbContext cont, string nome, int elo)
+    {
+        Usuario? user = await cont.usuarios.Include(u => u.Stats).FirstOrDefaultAsync(u => u.nome == nome);
+        if (user == null) return false;
+        
+        user.Stats!.user_elo = elo;
+
+        cont.SaveChanges();
+        return true;
+    }
+
+    static async Task<bool> trocar_user_dados(AppDbContext cont, change_user_info cui)
+    {
+        Usuario? user = await cont.usuarios.FirstOrDefaultAsync(u => u.email == cui.email);
+
+        if (user == null) return false;
+
+        if (cui.nome != null && cui.nome != "")
+        {
+            Usuario? procura = await find_user(cont, cui.nome);
+            if (procura == null) user.nome = cui.nome;
+        } 
+        if (cui.foto != null && cui.foto != "") user.foto_link = cui.foto;
+        if (cui.senha != null && cui.senha != "") {
+            using var hmac = new HMACSHA512();
+            byte[] senhaSalt = hmac.Key;
+            byte[] senhaHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(cui.senha));
+            user.senha_hash = senhaHash;
+            user.senha_salt = senhaSalt;
+
+
+        }
+
+        cont.SaveChanges();
+        return true;
+    }
+
     static async Task<Usuario?> find_user(AppDbContext cont, string nome)
     {
         Usuario? user = null;
@@ -193,6 +235,8 @@ public class Program
             {
                 user_ganhador = u_ganhador.id,
                 user_derrotado = u_derrotado.id,
+                user_ganhador_elo = u_ganhador.Stats!.user_elo,
+                user_derrotado_elo = u_derrotado.Stats!.user_elo,
                 tabuleiros = tabuleiros
             };
 
@@ -269,8 +313,6 @@ public class Program
             Console.WriteLine("Deu Ruim");
             Environment.Exit(1);
     }
-
-
     static async Task popular(AppDbContext cont)
     {
         await novo_user(cont, "patrick", "pátrique@mail", "12344", 900);
@@ -301,6 +343,10 @@ public class Program
         Environment.Exit(0);
     }
 
+
+
+
+
     static async Task Main(string[] args)
     {
         Console.WriteLine("==============");
@@ -326,37 +372,25 @@ public class Program
 
 
 
+        app.MapPut("/fimpartida", async (fim_partida fp) =>
+        {
+            await trocar_user_elo(cont, fp.ganhador, fp.elo_diff_ganhador);
+            await trocar_user_elo(cont, fp.perdedor, fp.elo_diff_perdedor);
+            await nova_partida(cont, fp.ganhador, fp.perdedor, fp.tabuleiros);
 
-        app.MapPut("/trocardados/", async (change_user_info upi) => {
-            var user = cont.usuarios.FirstOrDefault(u => u.email == upi.email);
-
-
-            if (user != null){
-                if (upi.nome != null && upi.nome != "")
-                {
-                    Usuario? procura = await find_user(cont, upi.nome);
-                    if (procura == null) user.nome = upi.nome;
-                } 
-                if (upi.foto != null && upi.foto != "") user.foto_link = upi.foto;
-                if (upi.senha != null && upi.senha != "") {
-                    using var hmac = new HMACSHA512();
-                    byte[] senhaSalt = hmac.Key;
-                    byte[] senhaHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(upi.senha));
-                    user.senha_hash = senhaHash;
-                    user.senha_salt = senhaSalt;
-
-
-                }
-                cont.SaveChanges();
-
-                return Results.Ok("alterado");
-            }
-
-            return Results.Unauthorized();
+            return Results.Ok("ok!");
         });
 
 
 
+
+        app.MapPut("/trocardados/", async (change_user_info cui) => {
+            bool r = await trocar_user_dados(cont, cui);
+
+            if (r) return Results.Ok("trocado");
+
+            return Results.Unauthorized();
+        });
 
         app.MapGet("/stats/{nome}", async (string nome) =>
         {

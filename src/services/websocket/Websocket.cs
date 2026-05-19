@@ -24,7 +24,7 @@ public class WebSocketServer
     private static ConcurrentDictionary<string, WebSocket> _clients_sockets = new(); //playre weebsocket
     private static ConcurrentDictionary<string, user_stats> _clients_stats = new(); //player stats ()
 
-    private static int _elo_prestiege_size = 200;
+    private static int _elo_prestiege_size = 300;
     private static ConcurrentDictionary<int, string> _queued_clients = new();  //leo bucket, playre
 
     private static ConcurrentDictionary<string, string[]> _playing_clients = new();  //player, sudoku_board
@@ -107,7 +107,7 @@ public class WebSocketServer
 
         if (_queued_clients.TryAdd(elo_bucket, id))
         {
-            await MessageClientAsync($"procurando por oponente...", webSocket);
+            await MessageClientAsync($"procurando por oponente... {elo_bucket}", webSocket);
             return;
         }
         else
@@ -132,6 +132,7 @@ public class WebSocketServer
         }
     }
 
+
     private static async Task HandleClientAsync(string id, WebSocket webSocket)
     {
         var buffer = new byte[1024];
@@ -150,10 +151,45 @@ public class WebSocketServer
             {
                 if (message == _playing_clients[id][1])
                 {
-                    _clients_sockets.TryGetValue(_playing_opponent[id], out WebSocket? v);
-                    if (v != null) await MessageClientAsync("perdeu:" , v);
+                    int winner_elo = _clients_stats[id].elo;
+                    int loser_elo = _clients_stats[_playing_opponent[id]].elo;
+
+                    int prob_w_ganhar = (int) ( 1.0 /( 1 + Math.Pow(10, (loser_elo-winner_elo)/350.0)) *100 );
+                    int prob_l_ganhar = 100-prob_w_ganhar;
+
+                    Console.WriteLine($"{prob_w_ganhar}%, {prob_l_ganhar}%");
+
+                    // int k_factor_w = Math.Max(10, 40-((winner_elo-850)/80));
+                    // int k_factor_l = Math.Max(10, 40-((loser_elo-850)/80));
+                    int k_factor_w = 40;
+                    int k_factor_l = 40;
+
+                    int elo_diff_w = (int) (winner_elo + k_factor_w * ((100 - prob_w_ganhar)/100.0));
+                    int elo_diff_l = (int) (loser_elo + k_factor_l * ((0 - prob_l_ganhar)/100.0));
+
+                    string boards = _playing_clients[id][0] +  _playing_clients[id][1]; 
+
+
+
                     
-                    await MessageClientAsync("ganhou:" , webSocket);
+                    fim_partida fp = new fim_partida(
+                        ganhador: id,
+                        perdedor: _playing_opponent[id],
+                        tabuleiros: boards,
+                        elo_diff_ganhador: elo_diff_w,
+                        elo_diff_perdedor: elo_diff_l
+                    );
+
+                    var client = new HttpClient();
+                    await client.PutAsJsonAsync("http://localhost:5127/fimpartida", fp);
+
+
+
+
+
+                    _clients_sockets.TryGetValue(_playing_opponent[id], out WebSocket? oppws);
+                    if (oppws != null)await MessageClientAsync($"perdeu: {elo_diff_l}elo" , oppws);
+                    await MessageClientAsync($"ganhou: {elo_diff_w}elo" , webSocket);
 
                     RemovePlayingClient(_playing_opponent[id]);
                     RemovePlayingClient(id);
@@ -167,7 +203,6 @@ public class WebSocketServer
 
             else if (message.StartsWith("jogar") && message.Length == 5)
             {
-                Console.WriteLine($"PORRALOCA: {id}");
                 string player_name = id;
                 FindMatch(player_name, id, webSocket);
             }
