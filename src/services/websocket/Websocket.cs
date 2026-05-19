@@ -179,9 +179,10 @@ public class WebSocketServer
             }
 
 
-            else if (message.StartsWith("jogar ") && message.Length > 6)
+            else if (message.StartsWith("jogar") && message.Length == 5)
             {
-                string player_name = message.Substring(6);
+                Console.WriteLine($"PORRALOCA: {id}");
+                string player_name = id;
                 FindMatch(player_name, id, webSocket);
             }
 
@@ -207,19 +208,34 @@ public class WebSocketServer
 
         var builder = WebApplication.CreateBuilder(args);
         var app = builder.Build();
-        //app.UseHttpsRedirection();
         app.UseWebSockets();
 
-        app.Map("/ws", async context =>
+        app.Map("/ws/{token}", async context =>
         {
-            if (!context.WebSockets.IsWebSocketRequest)
-            {
-                context.Response.StatusCode = StatusCodes.Status400BadRequest;
-                return;
-            }
+            if (!context.WebSockets.IsWebSocketRequest) return;
+
+            string? token = context.Request.RouteValues["token"]?.ToString();
+            if (token == null) return;
+
+
+            var client = new HttpClient();
+            var response = await client.GetAsync($"http://localhost:5269/confirmar/{token}");
+
+            if (response.StatusCode == HttpStatusCode.Unauthorized) return;
+            string usuario = (await response.Content.ReadFromJsonAsync<string>())!;
+
 
             using var web_socket = await context.WebSockets.AcceptWebSocketAsync();
-            string client_id = Guid.NewGuid().ToString();
+            string client_id = usuario;
+
+            if (_clients_sockets.ContainsKey(client_id))return;
+
+            if (_playing_clients.TryGetValue(client_id, out var boards))
+            {   
+                Console.WriteLine("PORRALOCA");
+                await MessageClientAsync("sudoku:" + boards[0], web_socket);
+            }
+
 
             try
             {

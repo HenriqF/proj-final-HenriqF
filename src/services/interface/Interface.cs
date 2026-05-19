@@ -9,7 +9,12 @@ using contracts;
 using System.Collections.Specialized;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
-using System.Text.Unicode; /* eu MARCELO botei isso */
+using System.Text.Unicode;
+using Microsoft.AspNetCore.Http.HttpResults;
+using System.Net; /* eu MARCELO botei isso */
+
+using System.Text;
+using System.Collections.Concurrent;
 
 
 
@@ -65,9 +70,12 @@ async Task<bool> Cadastrar(Cadastro dados)
 }
 
 
-
-
-
+/* 
+CLIENTE -> INTERFACE (dê-me token, esse sou eu: JWT)
+INTERFACE -> CLIENTE (token de entrada: 123)
+CLIENTE -> WEBSOCKET (eu posso entrar : 123)
+WEBSOCKET -> INTERFACE (ele pode entrar? 123)
+*/
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -94,7 +102,7 @@ app.MapGet("/leaderboard", async () =>
 
     var response = await client.GetAsync("http://localhost:5127/leaderboard");
 
-    if (! response.IsSuccessStatusCode)
+    if (response.StatusCode == HttpStatusCode.NoContent || ! response.IsSuccessStatusCode)
     {
         return Results.NoContent();
     }
@@ -190,6 +198,58 @@ app.MapGet("/stats/{nome}", async (string nome) => {
     return Results.Ok(stats);
 }).WithName("GetUserStats");
 
+
+ConcurrentDictionary<string, (DateTime, string)> solicitacoes = new();
+ConcurrentDictionary<string, string> solicitando = new();
+
+
+app.MapGet("/jogartoken/{nome}", (string nome) =>
+{
+    if (solicitando.ContainsKey(nome))
+    {
+        if (solicitacoes.TryGetValue(solicitando[nome], out (DateTime, string) info))
+        {
+            if (info.Item1 <= DateTime.Now)
+            {
+                solicitacoes.TryRemove(solicitando[nome], out _);
+                solicitando.TryRemove(info.Item2, out _);
+            }
+        }
+
+        return Results.Conflict("já solicitado");
+    }
+    if (solicitacoes.Count > 5000)
+    {
+        return Results.StatusCode(503);
+    }
+
+    string token = Guid.NewGuid().ToString("N");
+
+    solicitacoes.TryAdd(token, (DateTime.Now.AddSeconds(10), nome));
+    solicitando.TryAdd(nome, token);
+
+    return Results.Ok(token);
+});
+
+app.MapGet("/confirmar/{token}", (string token) =>
+{
+    if (solicitacoes.TryGetValue(token, out (DateTime, string) info))
+    {
+        if (info.Item1 >= DateTime.Now)
+        {
+            solicitacoes.TryRemove(token, out _);
+            solicitando.TryRemove(info.Item2, out _);
+            return Results.Ok(info.Item2);
+        }
+
+        return Results.Unauthorized();
+    }
+    else
+    {
+        return Results.Unauthorized();
+    }
+
+});
 
 app.Run();
 
