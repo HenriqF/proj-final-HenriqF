@@ -7,7 +7,7 @@ conectar_botao.addEventListener("click", e => {
     const sock = new WebSocket(`ws://127.0.0.1:5015/ws/${document.getElementById("input-nome").value}`); 
 
     sock.onopen = () => {
-        input.value = "conectado"
+        input.value = "jogar"
     }; 
 
     sock.onmessage = (event) => {
