@@ -64,3 +64,38 @@ textarea:disabled{
         background: #005fd3;
     }
 }
+
+#searching{
+    display: none;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 15%;
+}
+
+#searching h1{
+    text-align: center;
+}
+
+#victory{
+    display: none;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 15%;
+}
+
+#victory h1{
+    text-align: center;
+    font-size: 60px;
+}
+
+#defeat{
+    display: none;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 15%;
+}
+
+#defeat h1{
+    text-align: center;
+    font-size: 60px;
+}

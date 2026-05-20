@@ -44,7 +44,7 @@ async function fazerLogin(){
     
 };
 
-function validarLogin(){
+async function validarLogin(){
     let regex = /^[a-zA-Z0-9]*$/;
 
     if(userLogin.value == "" || senhaLogin.value == ""){
@@ -56,5 +56,28 @@ function validarLogin(){
         mensagem.innerText = "Somente letras e números são permitidos!";
         return false;
     }
+
+    if(!(await buscarNome())){
+        mensagem.innerText = "Credenciais Inválidas!";
+        return false;
+    }
     return true;
+}
+
+async function buscarNome() {
+    try{
+        const response = await fetch(`https://${host}:7185/existe/${userLogin.value}`);
+
+        const data = await response.json();
+        console.log(data)
+        if(data==1) return true;
+        
+        return false;
+
+    } catch(e){
+        console.log("erro ao verificar..."+ e)
+        msg.innerText = "Erro ao verificar disponibilidade do nome...";
+        return true;
+    }
+    
 }

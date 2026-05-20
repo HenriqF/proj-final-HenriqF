@@ -6,14 +6,22 @@
     <title>front</title>
     <link rel="stylesheet" href="css/game.css">
 </head>
-<body>
+<body id="body">
     <button id="butao">Mandar</button>
     <input id="input" placeholder="mensagem"></input>
     <br>
     <label>resposta:</label>
     <label id="resposta">porraloca</label>
-
-    <div class="um" id="sus" style="display:block">
+    <div id="searching">
+        <h1>Procurando jogador...</h1>
+    </div>
+    <div id="victory">
+        <h1>VITÓRIA!</h1>
+    </div>
+    <div id="defeat">
+        <h1>DERROTA! =C</h1>
+    </div>
+    <div class="um" id="sus" style="display:none">
         <br><br>
         <textarea maxlength="1" id="1"></textarea>
         <textarea maxlength="1" id="2"></textarea>
