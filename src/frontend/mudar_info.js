@@ -105,6 +105,8 @@ async function validarDados(){
 async function validarNome(){
     let regex = /^[a-zA-Z0-9]*$/;
 
+    novo_nome = document.getElementById("username").value;
+
     if(!regex.test(novo_nome)){
         msg.innerText = "Somente letras e números são permitidos!";
         return false;
@@ -137,8 +139,6 @@ async function buscarNome(nome_buscado) {
         msg.innerText = "Erro ao verificar disponibilidade do nome...";
         return true;
     }
-
-
     
 }
 

@@ -1,1 +1,1 @@
-const host = "localhost";
+const host = "26.156.144.128";

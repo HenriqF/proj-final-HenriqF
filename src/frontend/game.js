@@ -15,8 +15,23 @@ if(localStorage.getItem("tok")!==null){
             jogando(message);
         }
 
-        if(message.startsWith("ganhou:")||message.startsWith("perdeu:")){
+        if(message.startsWith("ganhou:")){
+            document.getElementById("body").style.backgroundColor = "#7dda75";
+            document.getElementById("victory").style.display = "block";
             document.getElementById("sus").style.display="none";
+        }  
+            
+        if(message.startsWith("perdeu:")){
+            document.getElementById("body").style.backgroundColor = "#db5f5f";
+            document.getElementById("defeat").style.display = "block";
+            document.getElementById("sus").style.display="none";
+        }
+
+        if(message.startsWith("procurando por oponente...")){
+            document.getElementById("body").style.backgroundColor = "#f0f2f5";
+            document.getElementById("victory").style.display = "none";
+            document.getElementById("defeat").style.display = "none";
+            document.getElementById("searching").style.display = "block";
         }
 
         resposta.textContent = message;
@@ -38,9 +53,13 @@ if(localStorage.getItem("tok")!==null){
 
     botao.addEventListener("click", () => {
         sock.send(input.value);
+        document.getElementById("body").style.backgroundColor = "#f0f2f5";
+        document.getElementById("victory").style.display = "none";
+        document.getElementById("defeat").style.display = "none";
     });
 
     function jogando(sudoku){
+        document.getElementById("searching").style.display = "none";
         document.getElementById("sus").style.display = "block";
 
         for(let i=1,  j=7; j<sudoku.length;i++, j++){
