@@ -164,7 +164,6 @@ public class Program
         return true;
     }
 
-
     static async Task<bool> trocar_user_elo(AppDbContext cont, string nome, int elo)
     {
         Usuario? user = await cont.usuarios.Include(u => u.Stats).FirstOrDefaultAsync(u => u.nome == nome);
@@ -376,25 +375,34 @@ public class Program
         Console.WriteLine("==============");
 
 
-        using var cont = new AppDbContext();
 
-        if (!cont.Database.CanConnect())
-        {
-            Console.WriteLine("sem conexao banco");
-            Environment.Exit(1);
-        }
-
-        if (args.Length > 0 && args[0] == "teste") await testar(cont);
-        if (args.Length > 0 && args[0] == "pop") await popular(cont);
         
 
         var builder = WebApplication.CreateBuilder(args);
+        builder.Services.AddDbContext<AppDbContext>();
         var app = builder.Build();
+
+        using (var scope = app.Services.CreateScope())
+        {
+            var cont = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            if (!cont.Database.CanConnect())
+            {
+                Console.WriteLine("sem conexao banco");
+                Environment.Exit(1);
+            }
+
+            if (args.Length > 0 && args[0] == "teste") await testar(cont);
+            if (args.Length > 0 && args[0] == "pop") await popular(cont);
+        }
+
         app.UseHttpsRedirection();
 
+        
+        
 
 
-        app.MapPut("/fimpartida", async (fim_partida fp) =>
+
+        app.MapPut("/fimpartida", async (AppDbContext cont, fim_partida fp) =>
         {
             await updt_user_melhor_tempo(cont, fp.ganhador, fp.duracao_ms);
             await trocar_user_elo(cont, fp.ganhador, fp.elo_diff_ganhador);
@@ -404,10 +412,7 @@ public class Program
             return Results.Ok("ok!");
         });
 
-
-
-
-        app.MapPut("/trocardados/", async (change_user_info cui) => {
+        app.MapPut("/trocardados/", async (AppDbContext cont, change_user_info cui) => {
             bool r = await trocar_user_dados(cont, cui);
 
             if (r) return Results.Ok("trocado");
@@ -415,7 +420,7 @@ public class Program
             return Results.Unauthorized();
         });
 
-        app.MapGet("/stats/{nome}", async (string nome) =>
+        app.MapGet("/stats/{nome}", async (AppDbContext cont, string nome) =>
         {
             Usuario? analise = await find_user(cont, nome);
             if (analise == null)
@@ -445,7 +450,7 @@ public class Program
             ));
         });
 
-        app.MapGet("/find/{nome}", async (string nome) =>
+        app.MapGet("/find/{nome}", async (AppDbContext cont, string nome) =>
         {
             Usuario? analise = await find_user(cont, nome);
             
@@ -461,7 +466,7 @@ public class Program
             return Results.Ok(new user_private_info(analise.nome, analise.email, _senhaHash, _senhaSalt));
         });
 
-        app.MapGet("/existe/{nome}", async (string nome) =>
+        app.MapGet("/existe/{nome}", async (AppDbContext cont, string nome) =>
         {
             Usuario? analise = await find_user(cont, nome);
             
@@ -469,7 +474,7 @@ public class Program
             return Results.Ok(1);
         });
         
-        app.MapPost("/cadastrar", async (Cadastro cadastro) =>
+        app.MapPost("/cadastrar", async (AppDbContext cont, Cadastro cadastro) =>
         {
             try
             {
@@ -488,7 +493,7 @@ public class Program
             }
         });
 
-        app.MapGet("/leaderboard", async () =>
+        app.MapGet("/leaderboard", async (AppDbContext cont) =>
         {
             (string nome, int elo, string foto)[]? res = await leaderboard(cont);
             if (res == null)
